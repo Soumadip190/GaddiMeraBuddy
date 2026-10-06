@@ -28,7 +28,7 @@ a{color:inherit}
 #intro.out{opacity:0;pointer-events:none}
 #stage{position:absolute;container-type:size;transition:transform 1.5s cubic-bezier(.65,0,.25,1);will-change:transform;background:#120c09}
 #stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
-#v2{opacity:0;transition:opacity .25s linear}
+#v2{opacity:0} /* NOTE: no transition on #v2 any more — the Part1→Part2 handoff is a hard cut, never a cross-fade */
 #starMask{position:absolute;border-radius:50%;pointer-events:none;opacity:0;
   background:radial-gradient(circle,rgba(20,17,14,.96) 0 48%,rgba(20,17,14,0) 74%);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -42,22 +42,33 @@ a{color:inherit}
 #plate.shake #chars{animation:shake .38s}
 @keyframes shake{20%{transform:translateX(-14px)}40%{transform:translateX(14px)}60%{transform:translateX(-9px)}80%{transform:translateX(7px)}}
 
-#chars{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+#chars{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0;
   font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:156px;line-height:1;
   text-transform:uppercase;white-space:nowrap;pointer-events:none;
-  gap:var(--gap,0px);transition:font-size .18s ease,gap .18s ease}
+  gap:var(--gap,0px)}
 #plate.engrave #chars{transition:none}
 
-.ch{display:inline-block;color:#14161b;text-shadow:0 .07em .1em rgba(0,0,0,.38);animation:float 2.1s ease-in-out var(--d,0s) infinite}
+/* During Part 2 the plate is transformed on every frame. Live DOM text is
+   re-rasterised as that transform changes, and on some machines that shows up
+   as the glyphs tearing / ghosting / flickering mid-motion (the text is the one
+   element whose raster the compositor keeps rebuilding). So once the engrave is
+   finished we bake the number into a STATIC canvas — a fixed texture the
+   compositor can just transform — and hide the live text. */
+#numCanvas{position:absolute;left:0;top:0;width:908px;height:200px;display:none;pointer-events:none;
+  transform:translateZ(0);backface-visibility:hidden;image-rendering:auto}
+#plate.raster #numCanvas{display:block}
+#plate.raster #chars{display:none}
+
+.ch{display:inline-block;color:#101216;text-shadow:0 .05em .07em rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.25)}   /* static: no bobbing, so the number never moves on the plate */
 .ch>i{display:inline-block;font-style:normal;animation:pop .32s cubic-bezier(.2,.9,.3,1.25)}
 @keyframes pop{from{opacity:0;transform:translateY(.25em) scale(.7)}to{opacity:1;transform:none}}
-@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-.075em) scale(1.035)}}
 
 /* engrave: sink once, then stay put (transform:none) */
 #plate.engrave .ch{animation:sink .55s cubic-bezier(.3,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*45ms)}
+#plate.engrave .ch>i{animation:none;opacity:1;transform:none}
 @keyframes sink{
-  from{transform:translateY(-.09em) scale(1.06);color:#14161b;text-shadow:0 .18em .2em rgba(0,0,0,.4)}
-  to{transform:none;color:#2a2c32;text-shadow:0 .018em 0 rgba(255,255,255,.75),0 -.02em 0 rgba(0,0,0,.65),.03em .03em .04em rgba(0,0,0,.3)}}
+  from{transform:translateY(-.09em) scale(1.06);color:#101216;text-shadow:0 .18em .2em rgba(0,0,0,.45)}
+  to{transform:none;color:#191b20;text-shadow:0 .026em 0 rgba(255,255,255,.95),0 -.024em 0 rgba(0,0,0,.8),.03em .04em .05em rgba(0,0,0,.5)}}
 
 #caret{position:relative;width:0;height:.78em;margin-left:calc(var(--gap,0px)*-1)}
 #caret::after{content:"";position:absolute;left:.06em;top:0;width:.07em;height:100%;background:#14161b;animation:blink 1s steps(1) infinite}
@@ -96,8 +107,6 @@ a{color:inherit}
 #hud button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(10,8,6,.5);color:#fff;display:grid;place-items:center;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #hud svg{width:20px;height:20px}
-#gate{position:absolute;inset:0;z-index:6;display:grid;place-items:center;background:rgba(10,8,6,.55);border:0;color:#fff}
-#gate span{display:flex;align-items:center;gap:10px;padding:14px 26px;border-radius:99px;background:linear-gradient(135deg,var(--amber),var(--amber2));color:#2a1500;font-weight:700;font-size:17px;box-shadow:0 10px 40px rgba(255,138,31,.45)}
 #fatal{position:absolute;inset:0;z-index:7;display:grid;place-items:center;text-align:center;padding:24px;background:#120c09;color:#ffd9a8;line-height:1.6}
 #fatal code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px}
 
@@ -237,6 +246,7 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
 
     <div id="plate">
       <div id="chars"></div>
+      <canvas id="numCanvas" width="1816" height="400" aria-hidden="true"></canvas>
       <div id="phold"><b></b>Enter your vehicle number</div>
       <div id="glint"></div>
       <input id="plateInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="14" aria-label="Vehicle registration number">
@@ -251,8 +261,7 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
     <button id="snd" type="button" aria-label="Toggle sound" title="Sound on/off"></button>
   </div>
 
-  <button id="gate" type="button" hidden><span>▶&nbsp; Click to start</span></button>
-  <div id="fatal" hidden><div><h2>Intro videos not found</h2>Put <code>part1.mp4</code> and <code>part2.mp4</code> in the same folder as <code>index.html</code> and open the page through a local server (see README).</div></div>
+  <div id="fatal" hidden><div><h2>Intro videos not found</h2>Put <code>part1.mp4</code> and <code>part2.mp4</code> (plus optional <code>_1080</code>/<code>_4k</code> variants) in the same folder as <code>index.html</code> and open the page through a local server (see README).</div></div>
 
   <div id="screenUI">
     <div class="dashbar"><span id="clk">--:--</span><span>InsureDrive OS</span><span>5G ▂▄▆</span></div>
@@ -364,6 +373,10 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
   </div>
 </div>
 
+<!-- Dense per-frame calibration produced by write_tracks.py (optional: the page
+     falls back to the embedded tables below if this file is not present). -->
+<script src="tracks.js"></script>
+
 <script>
 (()=>{
 'use strict';
@@ -371,10 +384,194 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEMO=true;                       // demo OTP = 123456. Set false once a real OTP API is wired in.
-const P1={x:.316,y:.619,w:.368,h:.144}; // blank plate box on LAST frame of part1 (fractions of the frame)
-const STOP=2.74;               // part2 time (s) where the screen is framed — frames after ~3.0s degrade
-// plate box over time in part2: [t, x, y, w, h]
-const KF=[[0,.308,.408,.384,.231],[.2,.316,.435,.368,.221],[.4,.345,.527,.309,.183],[.6,.376,.619,.249,.148],[.8,.398,.708,.206,.119],[1,.406,.792,.189,.108],[1.2,.406,.906,.19,.094]];
+let P1={x:.316,y:.619,w:.368,h:.144}; // blank plate box on LAST frame of part1 (fractions of the frame); replaced per-tier from TRACKS when tracks.js is present
+const STOP=2.74;               // part2 time (s) where the screen is framed
+const PLATE_HIDE_AT=1.30;     // begin hiding the plate once it is effectively leaving the frame
+
+/*
+ * PART 2 CALIBRATION
+ *
+ * The final calibration script emits rows as:
+ *   [t, TLx,TLy, TRx,TRy, BRx,BRy, BLx,BLy]
+ * with every coordinate normalized to the actual video's width/height.
+ *
+ * The existing box table is kept below only as a compatibility fallback until
+ * the generated BASE/1080/4K tables are pasted in. It is converted to four
+ * corners and therefore does not change the Part 1 behaviour.
+ */
+const QUAD_KFBASE=[[0,0.65016,0.632119,0.327386,0.635272,0.325647,0.413606,0.662104,0.411145],[0.03333,0.650089,0.633633,0.328666,0.637298,0.325864,0.415162,0.66168,0.410645],[0.06667,0.649414,0.634704,0.328896,0.637934,0.32659,0.41623,0.661286,0.412969],[0.1,0.64875,0.636134,0.328765,0.639507,0.326167,0.418386,0.660731,0.415205],[0.13333,0.647048,0.640797,0.331429,0.643471,0.329772,0.426149,0.658268,0.423766],[0.16667,0.644095,0.644072,0.334346,0.648369,0.331565,0.43472,0.656713,0.431669],[0.2,0.643151,0.647194,0.334691,0.652597,0.333172,0.43893,0.65505,0.435756],[0.23333,0.635806,0.654377,0.342153,0.6594,0.339919,0.464056,0.649524,0.460351],[0.26667,0.633822,0.665576,0.345361,0.668976,0.343541,0.476526,0.645255,0.473274],[0.3,0.631759,0.673672,0.347555,0.677105,0.347092,0.488077,0.643096,0.47898],[0.33333,0.627709,0.678705,0.351495,0.681361,0.351458,0.498669,0.639342,0.496211],[0.36667,0.625768,0.684508,0.35423,0.688105,0.352852,0.505165,0.637138,0.502267],[0.4,0.619531,0.696831,0.361078,0.698882,0.360454,0.529868,0.63026,0.527417],[0.43333,0.612798,0.71216,0.368718,0.714827,0.367169,0.554376,0.623847,0.552156],[0.46667,0.608891,0.720274,0.372332,0.723467,0.371883,0.56953,0.61997,0.56652],[0.5,0.607304,0.728664,0.375469,0.731596,0.374011,0.577912,0.617378,0.574795],[0.53333,0.600929,0.737812,0.381975,0.742712,0.380558,0.600715,0.611723,0.597532],[0.56667,0.598207,0.749432,0.386382,0.753036,0.384917,0.614775,0.608181,0.612643],[0.6,0.597023,0.75795,0.388597,0.760777,0.387208,0.623133,0.606381,0.620936],[0.63333,0.589981,0.762231,0.397315,0.777496,0.394254,0.652631,0.599368,0.648192],[0.66667,0.587769,0.781881,0.400409,0.78595,0.397379,0.664504,0.596584,0.662352],[0.7,0.586668,0.79051,0.401059,0.791952,0.399999,0.671129,0.594458,0.669674],[0.73333,0.58293,0.802792,0.404467,0.804424,0.404309,0.691667,0.590631,0.689417],[0.76667,0.581583,0.813872,0.40642,0.81386,0.407301,0.703709,0.587863,0.702384],[0.8,0.580562,0.819133,0.40841,0.820888,0.407664,0.710128,0.587158,0.708265],[0.83333,0.577414,0.834189,0.411676,0.837008,0.410554,0.731163,0.584305,0.728755],[0.86667,0.575928,0.843356,0.414413,0.84757,0.412239,0.743648,0.583252,0.741287],[0.9,0.575286,0.852133,0.414881,0.8556,0.412313,0.749941,0.582543,0.747521],[0.93333,0.573808,0.872991,0.416714,0.874076,0.414613,0.772546,0.581425,0.76994],[0.96667,0.573082,0.883239,0.417159,0.886756,0.415385,0.785432,0.580476,0.782884],[1,0.573279,0.889764,0.41668,0.892752,0.416186,0.793311,0.580455,0.791524],[1.03333,0.571502,0.895432,0.413751,0.919307,0.419169,0.829301,0.581567,0.824777],[1.06667,0.573303,0.944724,0.417549,0.943478,0.416345,0.846574,0.57997,0.846618],[1.1,0.57239,0.950659,0.417362,0.953309,0.416078,0.855042,0.580882,0.851948],[1.13333,0.570277,0.978256,0.416873,0.978835,0.416334,0.880545,0.581169,0.879586],[1.16667,0.572745,0.992432,0.418275,0.999629,0.415302,0.899409,0.580439,0.896149],[1.2,0.572683,0.996511,0.416386,0.998253,0.415663,0.907387,0.580806,0.90706],[1.23333,0.570116,0.997045,0.417374,0.998146,0.418201,0.934189,0.583018,0.933318],[1.26667,0.565259,0.997478,0.400747,0.998131,0.43934,0.954533,0.585737,0.953958],[1.3,0.561359,0.997675,0.296425,0.998251,0.556093,0.962471,0.591058,0.962388]];
+const QUAD_KF1080=[[0,0.650869,0.632605,0.327868,0.636358,0.325203,0.413684,0.663973,0.409945],[0.03333,0.650827,0.633231,0.328224,0.637327,0.325684,0.414699,0.66366,0.411786],[0.06667,0.650068,0.635044,0.329102,0.639251,0.326672,0.416556,0.662973,0.413719],[0.1,0.649457,0.637027,0.329336,0.640763,0.326661,0.41871,0.662284,0.41545],[0.13333,0.647311,0.641115,0.332068,0.645918,0.329402,0.426793,0.660079,0.423881],[0.16667,0.645293,0.645205,0.33457,0.649359,0.331683,0.435074,0.658068,0.432154],[0.2,0.643671,0.648899,0.335582,0.65387,0.33225,0.439878,0.657085,0.436431],[0.23333,0.636521,0.654681,0.340968,0.660731,0.339921,0.46404,0.650857,0.459329],[0.26667,0.632919,0.665519,0.345783,0.669604,0.343544,0.476732,0.64703,0.473282],[0.3,0.632416,0.67495,0.348127,0.678597,0.345343,0.482896,0.644691,0.480173],[0.33333,0.628788,0.685718,0.351678,0.686232,0.350135,0.498626,0.640341,0.495632],[0.36667,0.625842,0.687437,0.357869,0.690107,0.351319,0.506271,0.638943,0.502957],[0.4,0.620221,0.695004,0.361395,0.703588,0.35886,0.5318,0.632554,0.525026],[0.43333,0.613532,0.711851,0.368261,0.716743,0.366876,0.554241,0.625636,0.550608],[0.46667,0.61115,0.727721,0.372678,0.730197,0.371502,0.569312,0.621187,0.567424],[0.5,0.607766,0.729231,0.375608,0.732177,0.373829,0.577957,0.618468,0.57477],[0.53333,0.601543,0.736046,0.382438,0.743991,0.380742,0.601082,0.613092,0.597258],[0.56667,0.598627,0.750855,0.386959,0.754272,0.38496,0.615351,0.609177,0.612851],[0.6,0.598101,0.759115,0.388278,0.761066,0.387384,0.622533,0.607445,0.621159],[0.63333,0.589922,0.767997,0.396412,0.778584,0.394471,0.651057,0.600261,0.646969],[0.66667,0.588514,0.78214,0.399502,0.786356,0.398314,0.66529,0.597145,0.661828],[0.7,0.587369,0.793293,0.400923,0.795441,0.399081,0.671693,0.5953,0.669243],[0.73333,0.583738,0.806805,0.406143,0.808616,0.403697,0.690055,0.591309,0.687997],[0.76667,0.581735,0.813708,0.407454,0.814606,0.407375,0.703633,0.589103,0.702049],[0.8,0.580981,0.822118,0.409198,0.824185,0.407504,0.71046,0.588167,0.708135],[0.83333,0.576629,0.835838,0.41188,0.838962,0.41156,0.729093,0.585597,0.72869],[0.86667,0.576267,0.843808,0.414161,0.847968,0.412185,0.743705,0.584147,0.741051],[0.9,0.575682,0.85361,0.414965,0.854746,0.412851,0.750334,0.583637,0.747599],[0.93333,0.574734,0.872802,0.416379,0.874286,0.415058,0.771218,0.581896,0.769162],[0.96667,0.574599,0.887036,0.41651,0.88919,0.415352,0.785296,0.581618,0.783108],[1,0.573582,0.893537,0.417018,0.896287,0.415336,0.793632,0.581367,0.791376],[1.03333,0.572273,0.894537,0.412854,0.918445,0.418228,0.828819,0.58217,0.823638],[1.06667,0.571458,0.945342,0.415629,0.941839,0.416958,0.843875,0.581621,0.845446],[1.1,0.573853,0.950275,0.417937,0.956441,0.41468,0.854338,0.58131,0.851282],[1.13333,0.572131,0.976502,0.421586,0.97647,0.414815,0.880342,0.581316,0.878339],[1.16667,0.573398,0.983751,0.415585,0.988513,0.416661,0.898217,0.581944,0.895448],[1.2,0.573602,0.997446,0.416625,0.99952,0.415862,0.907873,0.581861,0.906144],[1.23333,0.57086,0.998183,0.417642,0.999357,0.418257,0.934249,0.58364,0.932974],[1.26667,0.56654,0.998588,0.415784,0.999241,0.423081,0.953285,0.586569,0.952552],[1.3,0.562378,0.998797,0.345604,0.999367,0.498143,0.963076,0.59095,0.962817]];
+const QUAD_KF4K=[[0,0.652161,0.63347,0.323986,0.636299,0.337691,0.418953,0.657051,0.417438],[0.03333,0.651969,0.634545,0.324597,0.637327,0.337786,0.419861,0.656983,0.418384],[0.06667,0.651246,0.636177,0.325278,0.638839,0.33852,0.422061,0.656023,0.420871],[0.1,0.650885,0.637658,0.325235,0.639987,0.338783,0.424281,0.655488,0.422991],[0.13333,0.648874,0.642371,0.328285,0.645305,0.341303,0.432532,0.653426,0.43118],[0.16667,0.646019,0.645583,0.330661,0.648995,0.343474,0.440179,0.651348,0.438972],[0.2,0.64487,0.650199,0.331504,0.653339,0.344525,0.442692,0.650267,0.44271],[0.23333,0.637025,0.655778,0.338267,0.659635,0.351103,0.467133,0.644877,0.46689],[0.26667,0.635151,0.666463,0.342161,0.669765,0.355068,0.481098,0.640718,0.479904],[0.3,0.633381,0.675224,0.344746,0.678442,0.35629,0.488244,0.639106,0.486934],[0.33333,0.629536,0.679525,0.34882,0.68177,0.360954,0.502754,0.634686,0.501659],[0.36667,0.630512,0.687505,0.355273,0.698437,0.349491,0.510777,0.631623,0.50418],[0.4,0.622138,0.695892,0.362099,0.701983,0.358098,0.534654,0.625915,0.529791],[0.43333,0.614312,0.711376,0.365804,0.713716,0.376606,0.55772,0.620148,0.556576],[0.46667,0.612864,0.718794,0.374705,0.729932,0.368644,0.573187,0.615074,0.560652],[0.5,0.609047,0.73036,0.372888,0.732152,0.382946,0.581134,0.613734,0.580402],[0.53333,0.602351,0.738832,0.380155,0.742971,0.389153,0.603763,0.607874,0.602872],[0.56667,0.599483,0.751322,0.384143,0.753916,0.393123,0.618294,0.604296,0.617568],[0.6,0.598477,0.759196,0.388279,0.761699,0.387038,0.622667,0.607934,0.620936],[0.63333,0.591847,0.767999,0.403927,0.776497,0.399335,0.654661,0.596278,0.648346],[0.66667,0.589685,0.783671,0.397563,0.785549,0.405658,0.667088,0.593169,0.666267],[0.7,0.590202,0.790847,0.402787,0.79976,0.39687,0.673671,0.591085,0.66632],[0.73333,0.578438,0.80548,0.411802,0.808233,0.402315,0.689809,0.59348,0.689327],[0.76667,0.581327,0.81454,0.409242,0.81687,0.406034,0.704445,0.590159,0.700844],[0.8,0.5837,0.820623,0.410638,0.828148,0.40561,0.712614,0.584274,0.706097],[0.83333,0.575901,0.833096,0.411878,0.838649,0.411715,0.728849,0.586726,0.729274],[0.86667,0.576449,0.843949,0.414264,0.84853,0.412134,0.743336,0.584454,0.740822],[0.9,0.576472,0.850315,0.415341,0.85429,0.412458,0.750357,0.584117,0.746832],[0.93333,0.572725,0.868467,0.421793,0.867774,0.420602,0.772578,0.578915,0.772309],[0.96667,0.57366,0.886679,0.416954,0.889815,0.415217,0.785355,0.582056,0.784155],[1,0.574874,0.895412,0.415154,0.897079,0.421754,0.795579,0.578087,0.794822],[1.03333,0.572645,0.894656,0.413463,0.914383,0.417946,0.829054,0.582425,0.823084],[1.06667,0.570755,0.942474,0.417051,0.943393,0.416461,0.844775,0.581804,0.845779],[1.1,0.573665,0.953843,0.417511,0.958624,0.415178,0.853945,0.58196,0.851921],[1.13333,0.572173,0.974741,0.422305,0.978229,0.414497,0.880536,0.58233,0.878008],[1.16667,0.57311,0.993648,0.421937,0.998936,0.413517,0.89867,0.582416,0.895191],[1.2,0.5737,0.997844,0.416834,1.00005,0.415912,0.907536,0.582587,0.906154],[1.23333,0.571278,0.998482,0.417883,0.999977,0.417793,0.934483,0.584272,0.932712],[1.26667,0.566379,0.999015,0.416073,0.999749,0.422416,0.953276,0.587682,0.95229],[1.3,0.562607,0.999175,0.352504,0.999905,0.491395,0.962649,0.591846,0.962373]];
+
+/*
+ * CANONICAL QUAD TABLES (TL,TR,BR,BL) — computed ONCE at load.
+ *
+ * The calibration detector returns the same four physical corners, but its
+ * PCA axis has no inherent direction, so the raw point order per keyframe is
+ * only defined up to a rotation/reflection (in the generated tables it was
+ * consistently BR,BL,TL,TR).
+ *
+ * FIX (root cause of the flicker): the old code re-derived the corner order
+ * PER FRAME with a min(x+y)/max(x+y)/max(x-y)/min(x-y) heuristic. That
+ * heuristic is only valid while the plate is roughly axis-aligned; when the
+ * plate becomes steeply foreshortened near the end of the shot the sums tie
+ * up, two heuristics claim the same corner, the "degenerate" guard fires and
+ * the RAW (rotated 180°) quad is used for that keyframe. Interpolating
+ * between a correctly-ordered quad and a rotated one then swings/mirrors the
+ * homography mid-motion, which is exactly the visible flicker/jump of the
+ * engraved number.
+ *
+ * Instead, every tier table is canonicalized ONCE, in order, with TEMPORAL
+ * CONTINUITY: frame 0 picks TL as the most top-left corner, and every
+ * following keyframe chooses, among the 8 possible corner bijections
+ * (4 rotations x 2 reflections), the one closest to the previous frame's
+ * canonical corners. Consecutive keyframes move a few percent at most, so
+ * the closest mapping is always the physically correct one, the corner
+ * ordering can never flip between frames, and quadAt() can never interpolate
+ * between incompatible quads. (Verified: 0 wrong assignments across all
+ * three tier tables, including the t=1.3 frame that broke the heuristic.)
+ */
+function canonicalizeTable(KF){
+  const PERMS=[];
+  for(let o=0;o<4;o++){
+    PERMS.push([0,1,2,3].map(i=>(i+o)%4));   // cyclic rotations
+    PERMS.push([0,3,2,1].map(i=>(i+o)%4));   // reversed winding
+  }
+  const out=[]; let prev=null;
+  for(const row of KF){
+    const pts=[[row[1],row[2]],[row[3],row[4]],[row[5],row[6]],[row[7],row[8]]];
+    const S=pts.map(p=>p[0]+p[1]), D=pts.map(p=>p[0]-p[1]);
+    const minS=Math.min(...S), maxS=Math.max(...S), minD=Math.min(...D), maxD=Math.max(...D);
+    let best=null,bestScore=Infinity;
+    for(const perm of PERMS){
+      const c=perm.map(i=>pts[i]);
+      let score;
+      if(!prev){
+        /* First frame only (the plate is roughly axis-aligned at t=0): seed with a
+           fully geometric order so the winding is correct — TL=min(x+y),
+           BR=max(x+y), TR=max(x-y), BL=min(x-y) — and reject mirrored windings by
+           requiring the same (positive) signed area as the design rectangle. */
+        const area=(c[0][0]*c[1][1]-c[1][0]*c[0][1])+(c[1][0]*c[2][1]-c[2][0]*c[1][1])
+                  +(c[2][0]*c[3][1]-c[3][0]*c[2][1])+(c[3][0]*c[0][1]-c[0][0]*c[3][1]);
+        score=(c[0][0]+c[0][1]-minS)+(maxS-(c[2][0]+c[2][1]))
+             +(maxD-(c[1][0]-c[1][1]))+((c[3][0]-c[3][1])-minD);
+        if(area<=0) score+=1e6;
+      }else{
+        score=0;
+        for(let k=0;k<4;k++) score+=(c[k][0]-prev[k][0])**2+(c[k][1]-prev[k][1])**2;
+      }
+      if(score<bestScore){bestScore=score;best=c;}
+    }
+    prev=best;
+    out.push([row[0],best[0][0],best[0][1],best[1][0],best[1][1],best[2][0],best[2][1],best[3][0],best[3][1]]);
+  }
+  return out;
+}
+
+/*
+ * TEMPORAL DENOISE of a quad table.
+ *
+ * The plate is a rigid object filmed by a smoothly-moving camera, so its true
+ * corner track is smooth; but every keyframe here is an INDEPENDENT per-frame
+ * measurement, so each carries a little detection noise (~0.2-0.4% of frame
+ * width). Played back, that noise makes the overlay shimmer/wobble by a few
+ * pixels frame-to-frame even though the ordering is correct — the "flicker"
+ * that survives the ordering fix.
+ *
+ * This is NOT the forbidden "smoothing to hide a bug": the bug (corner-order
+ * flips) is already fixed; this only removes zero-mean measurement noise from
+ * the calibration data itself. A symmetric 5-tap binomial filter is used, so
+ * any locally-linear motion (a corner moving at constant speed) passes through
+ * unchanged — only the frame-to-frame jitter is attenuated. Endpoints are left
+ * untouched so the first/last frames keep their measured values.
+ */
+function smoothTable(KF){
+  if(KF.length<5) return KF;
+  let cur=KF.map(r=>r.slice());
+  /* TWO passes of the symmetric 5-tap kernel (an effective 9-tap): each pass
+     removes ~half of the zero-mean per-frame detection noise, and because the
+     kernel is symmetric a corner moving at a locally-constant velocity comes
+     through unchanged. One pass left a few percent of visible shimmer; two
+     passes drops it below the eye's threshold while still following the plate's
+     real acceleration at the start/end of the shot. */
+  for(let pass=0; pass<2; pass++){
+    const src=cur.map(r=>r.slice());
+    for(let i=2;i<src.length-2;i++){
+      for(let j=1;j<=8;j++){
+        cur[i][j]=(src[i-2][j]+2*src[i-1][j]+3*src[i][j]+2*src[i+1][j]+src[i+2][j])/9;
+      }
+    }
+  }
+  return cur;
+}
+/*
+ * PLATE SIZE CORRECTION.
+ *
+ * The detector fits the plate's BRIGHT blob contour, which sits a little inside
+ * the plate's white face — measured at ~9% in width and ~2% in height on this
+ * footage. Because the engraved number is sized to the quad, that made the
+ * number come out slightly small with a white margin around it. So every quad
+ * (and P1) is grown about its own centre by these factors, which makes the
+ * number fill the plate. Tune PLATE_GROW_X/Y if it still looks off.
+ */
+const PLATE_GROW_X=1.0, PLATE_GROW_Y=1.0;
+function expandQuad(KF){
+  return KF.map(row=>{
+    const cx=(row[1]+row[3]+row[5]+row[7])/4, cy=(row[2]+row[4]+row[6]+row[8])/4;
+    const o=row.slice();
+    for(let j=1;j<=7;j+=2){ o[j]=cx+(row[j]-cx)*PLATE_GROW_X; o[j+1]=cy+(row[j+1]-cy)*PLATE_GROW_Y; }
+    return o;
+  });
+}
+function expandBox(b){
+  if(!b) return b;
+  const cx=b.x+b.w/2, cy=b.y+b.h/2;
+  return {x:cx-(cx-b.x)*PLATE_GROW_X, y:cy-(cy-b.y)*PLATE_GROW_Y, w:b.w*PLATE_GROW_X, h:b.h*PLATE_GROW_Y};
+}
+const QUAD_BY_TIER={
+  '4k':expandQuad(smoothTable(canonicalizeTable(QUAD_KF4K))),
+  '1080':expandQuad(smoothTable(canonicalizeTable(QUAD_KF1080))),
+  '360':expandQuad(smoothTable(canonicalizeTable(QUAD_KFBASE))),
+  '':expandQuad(smoothTable(canonicalizeTable(QUAD_KFBASE)))
+};
+
+/*
+ * OPTIONAL DENSE TABLES (tracks.js, produced by write_tracks.py)
+ *
+ * write_tracks.py measures the real plate on every frame of each encode and
+ * emits TRACKS = { "": {P1, QUAD}, "_1080": {...}, "_4k": {...} } with rows
+ * [t, TLx,TLy, TRx,TRy, BRx,BRy, BLx,BLy] (normalized) and P1 = {x,y,w,h}.
+ * If the file is present we adopt it per loaded tier; if it is absent the
+ * embedded canonical tables above are used, so the page always works.
+ * The generated rows are canonicalized once here too, so a detector whose
+ * point order is rotated/reflected can never reintroduce the flicker.
+ */
+const TRACKS_BY_TIER={};
+if(typeof TRACKS!=='undefined'&&TRACKS){
+  for(const key in TRACKS){
+    const entry=TRACKS[key];
+    if(!entry||!entry.QUAD||!entry.QUAD.length) continue;
+    const canon=expandQuad(smoothTable(canonicalizeTable(entry.QUAD)));
+    const name=key==='_4k'?'4k':key==='_1080'?'1080':'360';
+    TRACKS_BY_TIER[name]={P1:entry.P1||null,QUAD:canon};
+    if(name==='360') TRACKS_BY_TIER['']={P1:entry.P1||null,QUAD:canon};
+  }
+  /* write_tracks.py drops the last, edge-on frames where the plate can no longer
+     be detected, so a generated tier can end a few frames early. If so, append
+     the embedded tail for that tier (they agree where they overlap), otherwise
+     the overlay would FREEZE at the last keyframe while the real plate keeps
+     moving — a visible detach right before the plate leaves. */
+  for(const name in TRACKS_BY_TIER){
+    const emb=QUAD_BY_TIER[name]; if(!emb||!emb.length) continue;
+    const tbl=TRACKS_BY_TIER[name].QUAD;
+    const last=tbl.length?tbl[tbl.length-1][0]:0;
+    for(const row of emb){ if(row[0]>last+1e-6) tbl.push(row.slice()); }
+  }
+}
+const tierNameOf=s=>s==='_4k'?'4k':s==='_1080'?'1080':'360';
+function tierTable(tier){ return (TRACKS_BY_TIER[tier]&&TRACKS_BY_TIER[tier].QUAD)||QUAD_BY_TIER[tier]||QUAD_BY_TIER['']; }
+function tierP1(tier){ return (TRACKS_BY_TIER[tier]&&TRACKS_BY_TIER[tier].P1)||null; }
+
 // steering-wheel emblem track in part2: [t, cx, cy, diameter] (blurred out so no brand mark shows)
 const STAR=[[2.5,.27,.53,.04],[2.6,.2,.58,.05],[2.68,.12,.64,.06],[2.75,.034,.68,.075]];
 const SCREEN={x:.30,y:.43,w:.345,h:.22}; // infotainment glass in the frame at STOP
@@ -385,32 +582,214 @@ async function verifyOtp(phone,code){ await wait(600); return {ok:code==='123456
 async function lookupVehicle(plate){ await wait(500); return sampleVehicle(plate); }      // vehicle-registration lookup provider
 
 /* ---------- elements ---------- */
-const intro=$('#intro'), stage=$('#stage'), v1=$('#v1'), v2=$('#v2'), plate=$('#plate'), chars=$('#chars'), phold=$('#phold'),
-      input=$('#plateInput'), go=$('#go'), msg=$('#plateMsg'), star=$('#starMask'), glass=$('#glass'), gate=$('#gate'), snd=$('#snd'), screenUI=$('#screenUI');
+const intro=$('#intro'), stage=$('#stage'), v1=$('#v1'), v2=$('#v2'), plate=$('#plate'), chars=$('#chars'), numCanvas=$('#numCanvas'), phold=$('#phold'),
+      input=$('#plateInput'), go=$('#go'), msg=$('#plateMsg'), star=$('#starMask'), glass=$('#glass'), snd=$('#snd'), screenUI=$('#screenUI');
 const state={sound:true, stage:'boot', plate:'', phone:'', vehicle:null};
+
+/*
+ * PLATE CENTRING.
+ *
+ * The tracked quad sits a hair to the LEFT of the plate's white face (the
+ * detector fits the bright blob, which is slightly biased left), so the
+ * engraved number comes out a little left of centre on the plate. Nudge the
+ * number right by this many units of the 908x200 design plate so it is centred.
+ * Tune NUM_SHIFT_X (positive = right) / NUM_SHIFT_Y (positive = down) to taste;
+ * it applies to both the live text (Part 1) and the baked canvas (Part 2).
+ */
+const NUM_SHIFT_X=0, NUM_SHIFT_Y=0;
+
+/*
+ * PLATE BLEND (softening).
+ *
+ * The number is a razor-sharp vector overlay; the plate it sits on is video and
+ * is softer (especially at lower tiers). That sharp-on-soft contrast makes the
+ * number read as "pasted on" and its crisp edges look like they crawl/shimmer.
+ * So we soften the number very slightly so it blends into the plate's own
+ * softness. NUM_SOFTEN is in CANVAS pixels (the bake is 2x, so 3 here ≈ 1.5
+ * design units ≈ half a screen pixel at a typical plate size). Raise it to
+ * soften more, set it to 0 for a crisp number.
+ */
+const NUM_SOFTEN=2;
+chars.style.transform='translate('+NUM_SHIFT_X+'px,'+NUM_SHIFT_Y+'px)';
+chars.style.filter='blur('+(NUM_SOFTEN/2)+'px)';
 
 const ICON_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 const ICON_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6m0-6 6 6"/></svg>';
-function paintSound(){ snd.innerHTML=state.sound?ICON_ON:ICON_OFF; v1.muted=!state.sound; v2.muted=!state.sound; }
-snd.addEventListener('click',()=>{ state.sound=!state.sound; paintSound(); });
+
+/* ---------- car audio removed: the intro plays no car sound ---------- */
+
+let actx=null;
+function getAudioCtx(){
+  if(!actx){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(AC) actx=new AC();
+  }
+  if(actx&&actx.state==='suspended') actx.resume();
+  return actx;
+}
+function unlockAudio(){
+  getAudioCtx();
+  if(state.sound){
+    v1.muted=false;
+    v2.muted=false;
+  }
+  /* car audio removed — nothing to preload */
+}
+addEventListener('pointerdown',unlockAudio,{once:true});
+addEventListener('keydown',unlockAudio,{once:true});
+
+// Mechanical plate stamp punch sound
+function playStampSound(){
+  if(!state.sound) return;
+  const ctx=getAudioCtx(); if(!ctx) return;
+  const now=ctx.currentTime;
+  
+  // 1. Heavy hydraulic punch (low frequency thud)
+  const osc=ctx.createOscillator(), oscGain=ctx.createGain();
+  osc.type='triangle';
+  osc.frequency.setValueAtTime(150,now);
+  osc.frequency.exponentialRampToValueAtTime(32,now+0.18);
+  oscGain.gain.setValueAtTime(0.75,now);
+  oscGain.gain.exponentialRampToValueAtTime(0.001,now+0.22);
+  osc.connect(oscGain); oscGain.connect(ctx.destination);
+  osc.start(now); osc.stop(now+0.25);
+  
+  // 2. Metal resonance clank
+  const metal=ctx.createOscillator(), metalGain=ctx.createGain();
+  metal.type='sine';
+  metal.frequency.setValueAtTime(580,now);
+  metal.frequency.exponentialRampToValueAtTime(280,now+0.15);
+  metalGain.gain.setValueAtTime(0.35,now);
+  metalGain.gain.exponentialRampToValueAtTime(0.001,now+0.18);
+  metal.connect(metalGain); metalGain.connect(ctx.destination);
+  metal.start(now); metal.stop(now+0.2);
+
+  // 3. Impact transient noise
+  const bufferSize=Math.floor(ctx.sampleRate*0.06);
+  const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.015));
+  const noise=ctx.createBufferSource(); noise.buffer=buffer;
+  const noiseFilter=ctx.createBiquadFilter(); noiseFilter.type='bandpass'; noiseFilter.frequency.value=1200;
+  const noiseGain=ctx.createGain(); noiseGain.gain.setValueAtTime(0.5,now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001,now+0.06);
+  noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination);
+  noise.start(now);
+}
+
+// Specular glint shimmer sound
+function playGlintSound(){
+  if(!state.sound) return;
+  const ctx=getAudioCtx(); if(!ctx) return;
+  const now=ctx.currentTime;
+  [2200,3300,4400].forEach((freq,idx)=>{
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(freq,now+idx*0.04);
+    osc.frequency.exponentialRampToValueAtTime(freq*1.22,now+idx*0.04+0.32);
+    g.gain.setValueAtTime(0.08,now+idx*0.04);
+    g.gain.exponentialRampToValueAtTime(0.001,now+idx*0.04+0.38);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(now+idx*0.04); osc.stop(now+idx*0.04+0.42);
+  });
+}
+
+// Tactile keypress mechanical click
+function playKeyClick(){
+  if(!state.sound) return;
+  const ctx=getAudioCtx(); if(!ctx) return;
+  const now=ctx.currentTime;
+  const osc=ctx.createOscillator(), g=ctx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(800,now);
+  osc.frequency.exponentialRampToValueAtTime(320,now+0.035);
+  g.gain.setValueAtTime(0.12,now);
+  g.gain.exponentialRampToValueAtTime(0.001,now+0.035);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(now); osc.stop(now+0.04);
+}
+
+// Car engine sound removed. Kept as no-ops so the existing call sites
+// (playCarSound / stopCarSound) stay valid and nothing plays.
+function playCarSound(){}
+function stopCarSound(){}
+
+function paintSound(){
+  snd.innerHTML=state.sound?ICON_ON:ICON_OFF;
+  v1.muted=!state.sound;
+  v2.muted=!state.sound;
+  if(!state.sound) stopCarSound();
+}
+snd.addEventListener('click',()=>{
+  state.sound=!state.sound;
+  paintSound();
+  if(state.sound) playKeyClick();
+});
 paintSound();
 
 /* ---------- layout: video box is "cover", but never lets the plate overflow narrow screens ---------- */
 const DW=908, DH=200;          // design size of the plate (must match the CSS)
 const GO_X=.70;                // x (fraction of frame) where the arrow starts: just right of the REAL plate's outer edge. Tune this.
 let cur=[P1.x,P1.y,P1.w,P1.h];
+let lastQuad=null;
 
 function setRect(x,y,w,h){     // x,y,w,h = fractions of the video frame
   cur=[x,y,w,h];
   const sw=stage.clientWidth, sh=stage.clientHeight;
   plate.style.transform='translate('+x*sw+'px,'+y*sh+'px) scale('+(w*sw/DW)+','+(h*sh/DH)+')';
 }
+
+/* Solve the projective transform from the 908x200 design plate to the
+   measured four-corner quadrilateral. This is what keeps every character
+   locked to the physical plate even while the camera changes perspective. */
+function solveHomography(src,dst){
+  const A=[], b=[];
+  for(let i=0;i<4;i++){
+    const x=src[i][0], y=src[i][1], X=dst[i][0], Y=dst[i][1];
+    A.push([x,y,1,0,0,0,-x*X,-y*X]); b.push(X);
+    A.push([0,0,0,x,y,1,-x*Y,-y*Y]); b.push(Y);
+  }
+  for(let c=0;c<8;c++){
+    let p=c;
+    for(let r=c+1;r<8;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r;
+    if(Math.abs(A[p][c])<1e-12) return null;
+    [A[c],A[p]]=[A[p],A[c]]; [b[c],b[p]]=[b[p],b[c]];
+    const d=A[c][c];
+    for(let j=c;j<8;j++) A[c][j]/=d; b[c]/=d;
+    for(let r=0;r<8;r++){
+      if(r===c) continue;
+      const f=A[r][c]; if(Math.abs(f)<1e-14) continue;
+      for(let j=c;j<8;j++) A[r][j]-=f*A[c][j]; b[r]-=f*b[c];
+    }
+  }
+  return [b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7],1];
+}
+function setQuad(q){
+  if(!q) return;
+  lastQuad=q.slice();
+  const sw=stage.clientWidth, sh=stage.clientHeight;
+  const dst=[[q[0]*sw,q[1]*sh],[q[2]*sw,q[3]*sh],[q[4]*sw,q[5]*sh],[q[6]*sw,q[7]*sh]];
+  const H=solveHomography([[0,0],[DW,0],[DW,DH],[0,DH]],dst);
+  if(!H) return;
+  const [h00,h01,h02,h10,h11,h12,h20,h21,h22]=H;
+  plate.style.transform='matrix3d('+[h00,h10,0,h20,h01,h11,0,h21,0,0,1,0,h02,h12,0,h22].join(',')+')';
+  cur=[q[0],q[1],q[2]-q[0],q[3]-q[1]];
+  paintTrack(q);
+}
 function placeGo(){
   const sw=stage.clientWidth, sh=stage.clientHeight, vw=innerWidth;
-  const left=Math.max(GO_X,P1.x+P1.w)*sw, gap=Math.max(8,Math.min(sw*.016,18));
-  const room=vw-((vw-sw)/2+left)-8;
-  const d=Math.max(28,Math.min(P1.h*sh*.9,room-gap));
-  Object.assign(go.style,{width:d+'px',height:d+'px',left:(left+gap)+'px',top:((P1.y+P1.h/2)*sh-d/2)+'px'});
+  const plateR=(P1.x+P1.w)*sw, plateB=(P1.y+P1.h)*sh;           // real plate's outer right / bottom edge
+  const gap=Math.max(10,Math.min(sw*.018,22));
+  const room=vw-((vw-sw)/2+plateR)-gap-10;                      // free space to the right of the plate
+  if(room>=40){                                                 // normal: arrow sits beside the plate, never on it
+    const d=Math.min(P1.h*sh*.9,room);
+    Object.assign(go.style,{width:d+'px',height:d+'px',left:(plateR+gap)+'px',top:((P1.y+P1.h/2)*sh-d/2)+'px'});
+    msg.style.top=(P1.y+P1.h+.03)*100+'%';
+  } else {                                                      // phones in portrait: arrow goes under the plate, centred
+    const d=48;
+    Object.assign(go.style,{width:d+'px',height:d+'px',left:((P1.x+P1.w/2)*sw-d/2)+'px',top:(plateB+gap)+'px'});
+    msg.style.top=((plateB+gap+d+10)/sh*100)+'%';
+  }
 }
 function layout(){
   const vw=innerWidth, vh=innerHeight; let sw=Math.max(vw,vh*16/9);
@@ -418,12 +797,21 @@ function layout(){
   if(P1.w*sw>maxPlateW) sw=maxPlateW/P1.w;
   const sh=sw*9/16;
   Object.assign(stage.style,{width:sw+'px',height:sh+'px',left:(vw-sw)/2+'px',top:(vh-sh)/2+'px'});
-  setRect(...cur); placeGo();
+  // resize must NEVER re-introduce the Part-1 rect once tracking has started:
+  // during 'drive' the overlay is always re-applied from the SAME tracked quad.
+  if(state.stage==='drive' && lastQuad) setQuad(lastQuad);
+  else if(state.stage!=='drive') setRect(...cur);
+  placeGo();
 }
-function box1(){ setRect(P1.x,P1.y,P1.w,P1.h); msg.style.top=(P1.y+P1.h+.03)*100+'%'; placeGo(); }
+function box1(){ setRect(P1.x,P1.y,P1.w,P1.h); placeGo(); }
 addEventListener('resize',layout);
 layout(); box1();
-if(/debug/.test(location.search)) plate.style.outline='3px solid red'; // open /?debug to see the plate box
+const DBG=/debug/.test(location.search); // open /?debug to see the plate box AND the tracked quad
+if(DBG){
+  plate.style.outline='3px solid red';
+  stage.insertAdjacentHTML('beforeend','<svg id="trackDbg" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;z-index:9;pointer-events:none"><polygon id="trackPoly" points="" fill="none" stroke="#ff2d2d" stroke-width=".45"/></svg>');
+}
+function paintTrack(q){ if(!DBG||!q) return; const p=$('#trackPoly'); if(p) p.setAttribute('points',q[0]*100+','+q[1]*100+' '+q[2]*100+','+q[3]*100+' '+q[4]*100+','+q[5]*100+' '+q[6]*100+','+q[7]*100); }
 
 /* ---------- plate validation ---------- */
 const STD=/^[A-Z]{2}[0-9]{1,2}[A-Z]{0,3}[0-9]{4}$/, BH=/^[0-9]{2}BH[0-9]{4}[A-Z]{1,2}$/;
@@ -431,16 +819,17 @@ const valid=p=>STD.test(p)||BH.test(p);
 const clean=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
 
 const cv=document.createElement('canvas').getContext('2d');
+const FILL_W=.97, FILL_H=.98;                       // number covers 97% of the plate width, as tall as the plate allows
 function fit(){
   const L=[...chars.querySelectorAll('.ch')], n=L.length; if(!n) return;
   cv.font='700 100px "Barlow Condensed","Arial Narrow",sans-serif';
-  const w100=L.reduce((s,e)=>s+cv.measureText(e.textContent).width,0);
-  const T=DW*.88;                                   // number spans 88% of the plate width
-  const fs=Math.min(DH*.80,100*T/w100), nat=w100*fs/100;
-  const gap=n>1?Math.max(0,Math.min((T-nat)/(n-1),fs*.3)):0;
+  const w100=L.reduce((a,e)=>a+cv.measureText(e.textContent).width,0);
+  const T=DW*FILL_W;
+  const fs=Math.min(DH*FILL_H,100*T/w100), nat=w100*fs/100;
+  const gap=n>1?Math.max(0,Math.min((T-nat)/(n-1),fs*.35)):0;
   chars.style.fontSize=fs+'px'; chars.style.gap=gap+'px'; chars.style.setProperty('--gap',gap+'px');
 }
-document.fonts&&document.fonts.ready.then(fit);
+if(document.fonts){ document.fonts.load('700 100px "Barlow Condensed"').then(fit,()=>{}); document.fonts.ready.then(fit); }
 
 function say(html,bad){ msg.innerHTML=html; msg.classList.toggle('bad',!!bad); msg.classList.add('show'); }
 function renderChars(v){
@@ -458,6 +847,7 @@ function renderChars(v){
 function onType(){
   if(state.stage!=='typing') return;
   const v=clean(input.value); input.value=v; state.plate=v; renderChars(v);
+  playKeyClick();
   const ok=valid(v); go.disabled=!ok; go.classList.toggle('live',ok);
   if(!v) say('Type your car or bike number');
   else if(ok) say('Press <kbd>Enter ↵</kbd> or tap the arrow');
@@ -480,32 +870,58 @@ v1.addEventListener('ended',showPlate);
 v2.addEventListener('error',()=>{ if(state.stage==='drive') afterDrive(); });
 /* quality tiers: serves part1_4k.mp4 / part1_1080.mp4 / part1.mp4 (and the same for part2), best the screen can show, falling back automatically */
 const PX=Math.max(innerWidth,innerHeight*16/9)*(devicePixelRatio||1);
-const TIERS=PX>=3000?['_4k','_1080','']:PX>=1500?['_1080','']:[''];
+const TIER_Q=(location.search.match(/[?&]tier=(base|1080|4k)/i)||[])[1];
+const TIERS=TIER_Q?[{base:'',1080:'_1080','4k':'_4k'}[TIER_Q.toLowerCase()]]
+                  :(PX>=3000?['_4k','_1080','']:PX>=1500?['_1080','']:['']);
+let v2Tier='';
+function tierName(suffix){ return suffix==='_4k'?'4k':suffix==='_1080'?'1080':'360'; }
 function pickSrc(el,base){
   return new Promise(res=>{ let i=0;
-    const next=()=>{ if(i>=TIERS.length){ el.onloadedmetadata=el.onerror=null; return res(false); }
-      el.onloadedmetadata=()=>{ el.onloadedmetadata=el.onerror=null; res(true); };
-      el.onerror=()=>next(); el.src=base+TIERS[i++]+'.mp4'; el.load(); };
-    next(); });
+    const next=()=>{
+      if(i>=TIERS.length){ el.onloadedmetadata=el.onerror=null; return res(false); }
+      const suffix=TIERS[i++];
+      el.onloadedmetadata=()=>{
+        el.onloadedmetadata=el.onerror=null;
+        el._tier=TIERS[i-1];                       // remember which quality tier actually loaded
+        if(base==='part2') v2Tier=tierName(suffix);
+        res(true);
+      };
+      el.onerror=()=>{ el.onloadedmetadata=el.onerror=null; next(); };
+      el.src=base+suffix+'.mp4';
+      el.load();
+    };
+    next();
+  });
 }
 async function startV1(){
-  v1.currentTime=0; v1.muted=!state.sound;
-  try{ await v1.play(); }
-  catch(e){ if(state.sound){ v1.muted=true; try{ await v1.play(); }catch(_){ fallbackShow(); } } else fallbackShow(); }
+  v1.currentTime=0;
+  v1.muted=!state.sound;
+  try{
+    await v1.play();
+  }catch(e){
+    // Browser blocked unmuted autoplay -> immediately play muted with zero interruption or Click to Start
+    v1.muted=true;
+    try{ await v1.play(); }catch(_){ fallbackShow(); }
+  }
 }
 function fallbackShow(){ try{ v1.currentTime=Math.max(0,v1.duration-.05); }catch(e){} showPlate(); }
 (async function boot(){
   const ok=await Promise.all([pickSrc(v1,'part1'),pickSrc(v2,'part2')]);
   if(!ok[0]) return fatal();
+  // Adopt the measured per-tier calibration if tracks.js loaded (otherwise the
+  // embedded tables are already in use). P1 comes from the tier Part 1 actually
+  // played, so the typing plate + arrow sit correctly on 1080p/4K too.
+  const p1p=tierP1(tierNameOf(v1._tier||''));
+  if(p1p) P1=expandBox(p1p);
+  v2._t2=TRACKS_BY_TIER[v2Tier]||null;
+  layout(); box1();
   if(RM){
     const done=()=>{ v1.currentTime=Math.max(0,(v1.duration||1.5)-.05); };
     v1.readyState>=1?done():v1.addEventListener('loadedmetadata',done,{once:true});
     v1.addEventListener('seeked',showPlate,{once:true}); return;
   }
-  try{ v1.muted=false; await v1.play(); }
-  catch(e){ gate.hidden=false; }   // browser blocked sound autoplay -> one click to start (keeps audio on both clips)
+  startV1();
 })();
-gate.addEventListener('click',()=>{ gate.hidden=true; startV1(); });
 
 /* ---------- confirm: engrave -> glint -> part2 ---------- */
 let lookupP=null;
@@ -513,18 +929,41 @@ async function confirm(){
   if(state.stage!=='typing') return;
   state.stage='engrave'; input.blur(); go.disabled=true; go.classList.remove('live'); go.classList.add('gone'); $('#caret')?.remove(); msg.classList.remove('show');
   lookupP=lookupVehicle(state.plate);
+  playStampSound();
   plate.classList.add('engrave');
-  await wait(520); plate.classList.add('glint-go');
+  await wait(520);
+  playGlintSound();
+  plate.classList.add('glint-go');
   await wait(900);
   if(RM){ return openScreen(); }
   startDrive();
 }
-function kfAt(t){
-  if(t>=KF[KF.length-1][0]) return null;
-  let i=0; while(i<KF.length-2 && t>KF[i+1][0]) i++;
-  const a=KF[i], b=KF[i+1], u=Math.min(1,Math.max(0,(t-a[0])/(b[0]-a[0])));
-  const L=(p,q)=>p+(q-p)*u;
-  return {x:L(a[1],b[1]),y:L(a[2],b[2]),w:L(a[3],b[3]),h:L(a[4],b[4]),a:t<.9?1:Math.max(0,1-(t-.9)/.35)};
+
+function quadAt(t){
+  // Dense per-frame table for the tier that actually loaded (tracks.js), or the
+  // embedded canonical table for that tier. Both are already TL,TR,BR,BL, so we
+  // only ever interpolate between matching corners — no ordering flip possible.
+  const KF=(v2._t2&&v2._t2.QUAD)||tierTable(v2Tier);
+  if(!KF.length || t<KF[0][0] || t>KF[KF.length-1][0]) return null;
+
+  if(t<=KF[0][0]){
+    return KF[0].slice(1);
+  }
+  let i=0;
+  while(i<KF.length-2 && t>KF[i+1][0]) i++;
+  const a=KF[i], b=KF[i+1];
+  const u=Math.min(1,Math.max(0,(t-a[0])/(b[0]-a[0])));
+  const out=[];
+  for(let j=1;j<=8;j++) out.push(a[j]+(b[j]-a[j])*u);
+  return out;   // flat 8: TLx,TLy,TRx,TRy,BRx,BRy,BLx,BLy — matches setQuad/clipQuad
+}
+function quadBounds(q){
+  const xs=[q[0],q[2],q[4],q[6]], ys=[q[1],q[3],q[5],q[7]];
+  return {x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+}
+function clipQuad(q){
+  const over=Math.max(q[1],q[3],q[5],q[7])-1;
+  plate.style.clipPath=over>0?'inset(0 0 '+Math.min(100,over*100)+'% 0)':'none';
 }
 function starAt(t){
   if(t<STAR[0][0]) return null;
@@ -538,32 +977,133 @@ function placeStar(s){
   const d=s[3]; star.style.opacity=1;
   Object.assign(star.style,{left:(s[1]-d/2)*100+'%',top:(s[2]-d*8/9)*100+'%',width:d*100+'%',height:d*16/9*100+'%'});
 }
+/* Bake the engraved number into a static canvas (see the #numCanvas note in the
+   CSS). Same font/size/gap the live text used, so the look is preserved; the
+   only difference is that from here on the number is a fixed texture, which
+   stops the per-frame re-rasterisation that was tearing the glyphs. */
+function rasterizeNumber(){
+  const txt=state.plate; if(!txt||!numCanvas) return false;
+  const cv=numCanvas, S=cv.width/908, c=cv.getContext('2d'); if(!c) return false;
+  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.scale(S,S);
+  const cs=getComputedStyle(chars);
+  const fs=parseFloat(cs.fontSize)||156, gap=parseFloat(cs.gap)||0;
+  c.font='700 '+fs+'px '+cs.fontFamily;
+  c.textAlign='center'; c.textBaseline='middle';
+  const ws=[...txt].map(ch=>c.measureText(ch).width);
+  const total=ws.reduce((a,b)=>a+b,0)+gap*Math.max(0,txt.length-1);
+  let x=(908-total)/2+NUM_SHIFT_X;             // same centring nudge as the live text
+  const y0=100+NUM_SHIFT_Y;
+  if(NUM_SOFTEN>0) c.filter='blur('+NUM_SOFTEN+'px)';   // soften so it blends with the plate
+  for(let i=0;i<txt.length;i++){
+    const cxp=x+ws[i]/2;
+    c.fillStyle='rgba(255,255,255,.55)'; c.fillText(txt[i],cxp,y0-fs*0.024); // engraved top highlight
+    c.fillStyle='rgba(0,0,0,.5)';        c.fillText(txt[i],cxp,y0+fs*0.026); // engraved bottom shade
+    c.fillStyle='rgba(0,0,0,.28)';       c.fillText(txt[i],cxp+fs*0.012,y0+fs*0.02);
+    c.fillStyle='#1a1c22';               c.fillText(txt[i],cxp,y0);           // the number itself
+    x+=ws[i]+gap;
+  }
+  if(NUM_SOFTEN>0) c.filter='none';
+  return true;
+}
+
 async function startDrive(){
   state.stage='drive';
+  if(rasterizeNumber()) plate.classList.add('raster');   // freeze the number into a static texture (falls back to live text if unavailable)
   v2.currentTime=0; v2.muted=!state.sound;
-  const k0=kfAt(0);
-  plate.style.transition='transform .25s ease,opacity .5s';
-  setRect(k0.x,k0.y,k0.w,k0.h);
-  v2.style.opacity=1;                       // 250ms cross-fade from part1's last frame to part2's first frame
-  await wait(260);
-  plate.style.transition='opacity .2s';
+  playCarSound();
+  const q0=quadAt(0);
+  if(q0) lastQuad=q0.slice();               // resize safety: remember the drive quad before any paint
+
+  /* HARD Part1 -> Part2 handoff (no cross-fade).
+     The overlay must NEVER sit at the Part-2 position while the Part-1
+     frozen frame is still visible: that gap (it existed while waiting for
+     v2's first decoded frame) reads as the engraved number jumping to a
+     new position and flickering between the two plates. So: wait for
+     Part-2 frame 0 to be decoded FIRST, and only then apply the whole
+     swap — hide v1, move the overlay onto Part-2's frame-0 quad, show v2 —
+     in ONE synchronous style batch, which the browser paints as a single
+     frame. There is no intermediate paint in which the number can appear
+     anywhere except on the plate that is on screen. */
+  if(v2.readyState<2){
+    await new Promise(r=>{ const d=setTimeout(r,800); v2.addEventListener('loadeddata',()=>{clearTimeout(d);r();},{once:true}); });
+  }
+  v2.style.transition='none';                 // kill any opacity transition on the video: the cut must be instantaneous
+  plate.style.transition='none';               // no transition of any kind on the overlay while it is tracking
+
+  /* WARM-UP BEFORE THE CUT.
+     Starting a freshly-decoded video can stall for a few hundred ms while the
+     decoder produces its first PRESENTED frame. On a slower machine that stall
+     showed up as the Part-2 plate FREEZING on frame 0 for ~0.3 s and then
+     jumping into motion — which reads as a flicker/jump at the handoff. So we
+     start Part-2 HIDDEN and wait until it is actually presenting frames; only
+     THEN do the visible cut (hide v1, lock the overlay to Part-2's CURRENT
+     quad, show v2) in one synchronous batch. The user keeps seeing the engraved
+     Part-1 plate until Part-2 is genuinely rolling, so there is no frozen frame
+     and no jump — the cut is still instantaneous. */
+  v2.style.opacity=0;
   try{ await v2.play(); }
   catch(e){ if(state.sound){ v2.muted=true; try{ await v2.play(); }catch(_){ return afterDrive(); } } else return afterDrive(); }
-  const tick=()=>{
-    if(state.stage!=='drive') return;
-    const t=v2.currentTime, k=kfAt(t);
-    if(k){ setRect(k.x,k.y,k.w,k.h); plate.style.opacity=k.a; } else plate.style.opacity=0;
+  await new Promise(r=>{
+    let to=null;
+    const done=()=>{ clearTimeout(to); r(); };
+    to=setTimeout(done,900);                   // never wait longer than 900 ms
+    if('requestVideoFrameCallback' in v2) v2.requestVideoFrameCallback(done);
+    else v2.addEventListener('timeupdate',done,{once:true});
+  });
+  const qc=quadAt(v2.currentTime)||q0;         // Part-2's CURRENT frame (not necessarily 0)
+  v1.pause();
+  v1.style.visibility='hidden';               // Part 1 disappears in the same frame Part 2 appears
+  if(qc) setQuad(qc);                         // overlay locks onto Part-2's plate quad in the SAME batch
+  v2.style.opacity=1;
+
+  /* Keep the tracking state monotonic.  A browser video callback can very
+     occasionally report a stale mediaTime while the frame stream is moving
+     forward.  Applying that stale time would send the plate overlay back to
+     an old quad for one or two frames, which looks like the registration
+     number flickering/floating.  Never move the overlay backwards. */
+  let lastMediaTime=0;
+
+  const draw=t=>{
+    if(!Number.isFinite(t)) t=v2.currentTime;
+    if(t < lastMediaTime - 0.08) return;       // stale/stuttering callback: keep the last applied quad
+    if(t > lastMediaTime) lastMediaTime=t;
+
+    /* If quadAt() returns null before the hide point (out-of-range or stale
+       keyframe lookup), keep tracking the LAST GOOD quad instead of
+       blanking/re-placing the plate — a one-frame null used to drop the
+       overlay's clip/opacity and read as a flicker. */
+    const q=quadAt(t)||(t<PLATE_HIDE_AT&&lastQuad?lastQuad:null);
+    if(q && t<PLATE_HIDE_AT){
+      setQuad(q);
+      clipQuad(q);
+      plate.style.opacity=1;
+    }else if(q && t<PLATE_HIDE_AT+0.14){
+      setQuad(q);
+      clipQuad(q);
+      plate.style.opacity=Math.max(0,1-(t-PLATE_HIDE_AT)/0.14);
+    }else{
+      plate.style.opacity=0;
+      plate.style.clipPath='none';
+    }
     placeStar(starAt(t));
-    if(t>=STOP || v2.ended){ v2.pause(); return afterDrive(); }
-    requestAnimationFrame(tick);
   };
-  requestAnimationFrame(tick);
+  const tick=(now,meta)=>{
+    if(state.stage!=='drive') return;
+    const reported=meta&&meta.mediaTime!=null?meta.mediaTime:v2.currentTime;
+    const t=Math.max(lastMediaTime, reported);
+    draw(t);
+    if(t>=STOP || v2.ended){ v2.pause(); return afterDrive(); }
+    next();
+  };
+  const next=()=>{ if('requestVideoFrameCallback' in v2) v2.requestVideoFrameCallback(tick); else requestAnimationFrame(tick); };
+  next();
 }
 
 /* ---------- zoom into the infotainment screen ---------- */
 async function afterDrive(){
+  stopCarSound();
   if(state.stage==='zoom'||state.stage==='screen') return;
-  state.stage='zoom'; plate.style.opacity=0; placeStar(STAR[STAR.length-1]);
+  state.stage='zoom'; lastQuad=null; plate.style.opacity=0; plate.style.clipPath='none'; placeStar(STAR[STAR.length-1]);
   const st=stage.getBoundingClientRect(), vw=innerWidth, vh=innerHeight;
   const ox=(SCREEN.x+SCREEN.w/2)*st.width, oy=(SCREEN.y+SCREEN.h/2)*st.height;
   const cx=st.left+ox, cy=st.top+oy;
