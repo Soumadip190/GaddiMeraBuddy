@@ -28,16 +28,17 @@ a{color:inherit}
 #intro.out{opacity:0;pointer-events:none}
 #stage{position:absolute;container-type:size;transition:transform 1.5s cubic-bezier(.65,0,.25,1);will-change:transform;background:#120c09}
 #stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
-#v2{opacity:0} /* NOTE: no transition on #v2 any more — the Part1→Part2 handoff is a hard cut, never a cross-fade */
-#starMask{position:absolute;border-radius:50%;pointer-events:none;opacity:0;
+#v1{z-index:1}
+#v2{z-index:0;opacity:.001;pointer-events:none} /* non-zero opacity keeps compositor & decoder warm behind v1 */
+#starMask{position:absolute;z-index:2;border-radius:50%;pointer-events:none;opacity:0;
   background:radial-gradient(circle,rgba(20,17,14,.96) 0 48%,rgba(20,17,14,0) 74%);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-#glass{position:absolute;left:30%;top:43%;width:34.5%;height:22%;border-radius:1.4% / 4%;opacity:0;pointer-events:none;
+#glass{position:absolute;z-index:2;left:30%;top:43%;width:34.5%;height:22%;border-radius:1.4% / 4%;opacity:0;pointer-events:none;
   background:linear-gradient(180deg,#0f2d62,var(--screen));box-shadow:0 0 6cqw rgba(77,178,255,.35);transition:opacity .7s ease}
 #glass.on{opacity:1}
 
 /* plate is drawn at 908x200 and scaled onto the video plate by JS */
-#plate{position:absolute;left:0;top:0;width:908px;height:200px;transform-origin:0 0;opacity:0;pointer-events:none;transition:opacity .5s ease;will-change:transform}
+#plate{position:absolute;z-index:2;left:0;top:0;width:908px;height:200px;transform-origin:0 0;opacity:0;pointer-events:none;transition:opacity .5s ease;will-change:transform}
 #plate.ready{opacity:1;pointer-events:auto}
 #plate.shake #chars{animation:shake .38s}
 @keyframes shake{20%{transform:translateX(-14px)}40%{transform:translateX(14px)}60%{transform:translateX(-9px)}80%{transform:translateX(7px)}}
@@ -96,7 +97,7 @@ a{color:inherit}
 #plate.glint-go #glint::after{animation:glint .75s ease-out forwards}
 @keyframes glint{from{left:-35%;opacity:1}to{left:112%;opacity:1}}
 
-#plateMsg{position:absolute;left:50%;transform:translateX(-50%);font-size:max(12px,1.15cqw);letter-spacing:.04em;color:#ffe9c4;
+#plateMsg{position:absolute;z-index:3;left:50%;transform:translateX(-50%);font-size:max(12px,1.15cqw);letter-spacing:.04em;color:#ffe9c4;
   text-shadow:0 1px 8px rgba(0,0,0,.8);background:rgba(10,8,6,.45);padding:.5em 1.1em;border-radius:99px;opacity:0;transition:opacity .4s;white-space:nowrap;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #plateMsg.show{opacity:1}
@@ -230,7 +231,6 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
 }
 @media (prefers-reduced-motion:reduce){
   .ch,#go.live,#caret,#phold b{animation:none!important}
-  #stage{transition:none}
 }
 </style>
 </head>
@@ -240,7 +240,7 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
 <div id="intro">
   <div id="stage">
     <video id="v1" playsinline preload="auto"></video>
-    <video id="v2" playsinline preload="auto"></video>
+    <video id="v2" muted playsinline preload="auto"></video>
     <div id="starMask"></div>
     <div id="glass"></div>
 
@@ -382,7 +382,7 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
 'use strict';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RM=false;
 const DEMO=true;                       // demo OTP = 123456. Set false once a real OTP API is wired in.
 let P1={x:.316,y:.619,w:.368,h:.144}; // blank plate box on LAST frame of part1 (fractions of the frame); replaced per-tier from TRACKS when tracks.js is present
 const STOP=2.74;               // part2 time (s) where the screen is framed
@@ -631,8 +631,8 @@ function unlockAudio(){
   getAudioCtx();
   if(state.sound){
     v1.muted=false;
-    v2.muted=false;
   }
+  v2.muted=true;
   /* car audio removed — nothing to preload */
 }
 addEventListener('pointerdown',unlockAudio,{once:true});
@@ -717,7 +717,7 @@ function stopCarSound(){}
 function paintSound(){
   snd.innerHTML=state.sound?ICON_ON:ICON_OFF;
   v1.muted=!state.sound;
-  v2.muted=!state.sound;
+  v2.muted=true;
   if(!state.sound) stopCarSound();
 }
 snd.addEventListener('click',()=>{
@@ -867,31 +867,59 @@ function showPlate(){
 }
 function fatal(){ $('#fatal').hidden=false; }
 v1.addEventListener('ended',showPlate);
-v2.addEventListener('error',()=>{ if(state.stage==='drive') afterDrive(); });
-/* quality tiers: serves part1_4k.mp4 / part1_1080.mp4 / part1.mp4 (and the same for part2), best the screen can show, falling back automatically */
+/* quality tiers: serves part1_1080.mp4 / part1.mp4 (and part1_4k.mp4 when ?tier=4k), falling back automatically */
 const PX=Math.max(innerWidth,innerHeight*16/9)*(devicePixelRatio||1);
 const TIER_Q=(location.search.match(/[?&]tier=(base|1080|4k)/i)||[])[1];
-const TIERS=TIER_Q?[{base:'',1080:'_1080','4k':'_4k'}[TIER_Q.toLowerCase()]]
-                  :(PX>=3000?['_4k','_1080','']:PX>=1500?['_1080','']:['']);
-let v2Tier='';
+const TIERS=TIER_Q?[{base:'',1080:'_1080','4k':'_4k'}[TIER_Q.toLowerCase()],'']
+                  :(PX>=1500?['_1080','']:['']);
+let v2Tier='360';
 function tierName(suffix){ return suffix==='_4k'?'4k':suffix==='_1080'?'1080':'360'; }
-function pickSrc(el,base){
+function pickSrc(el,base,tiers=TIERS){
   return new Promise(res=>{ let i=0;
     const next=()=>{
-      if(i>=TIERS.length){ el.onloadedmetadata=el.onerror=null; return res(false); }
-      const suffix=TIERS[i++];
-      el.onloadedmetadata=()=>{
-        el.onloadedmetadata=el.onerror=null;
-        el._tier=TIERS[i-1];                       // remember which quality tier actually loaded
-        if(base==='part2') v2Tier=tierName(suffix);
+      if(i>=tiers.length){ el.onloadeddata=el.onloadedmetadata=el.onerror=null; return res(false); }
+      const suffix=tiers[i++];
+      let settled=false;
+      const to=setTimeout(()=>{
+        if(settled) return;
+        settled=true; el.onloadeddata=el.onloadedmetadata=el.onerror=null; next();
+      },4500);
+      const ok=()=>{
+        if(settled) return;
+        settled=true; clearTimeout(to);
+        el.onloadeddata=el.onloadedmetadata=el.onerror=null;
+        el._tier=suffix;
+        if(base==='part2'){
+          v2Tier=tierName(suffix);
+          v2._t2=TRACKS_BY_TIER[v2Tier]||null;
+        }
         res(true);
       };
-      el.onerror=()=>{ el.onloadedmetadata=el.onerror=null; next(); };
+      el.onloadeddata=ok;
+      el.onloadedmetadata=()=>{ if(el.readyState>=2) ok(); };
+      el.onerror=()=>{
+        if(settled) return;
+        settled=true; clearTimeout(to);
+        el.onloadeddata=el.onloadedmetadata=el.onerror=null;
+        next();
+      };
       el.src=base+suffix+'.mp4';
       el.load();
     };
     next();
   });
+}
+let v2LoadP=null;
+async function ensureV2Ready(forceBase=false){
+  if(!forceBase && v2LoadP){ try{ await v2LoadP; }catch(_){} }
+  if(!forceBase && !v2.error && v2.readyState>=2) return true;
+  if(!forceBase && !v2.error && v2.readyState===1){
+    await new Promise(r=>{ const d=setTimeout(r,1200); v2.addEventListener('loadeddata',()=>{clearTimeout(d);r();},{once:true}); });
+    if(!v2.error && v2.readyState>=2) return true;
+  }
+  const fallbackTiers=forceBase?['']:(v2._tier===''?['']:['']);
+  v2LoadP=pickSrc(v2,'part2',fallbackTiers);
+  return v2LoadP;
 }
 async function startV1(){
   v1.currentTime=0;
@@ -906,36 +934,32 @@ async function startV1(){
 }
 function fallbackShow(){ try{ v1.currentTime=Math.max(0,v1.duration-.05); }catch(e){} showPlate(); }
 (async function boot(){
-  const ok=await Promise.all([pickSrc(v1,'part1'),pickSrc(v2,'part2')]);
-  if(!ok[0]) return fatal();
-  // Adopt the measured per-tier calibration if tracks.js loaded (otherwise the
-  // embedded tables are already in use). P1 comes from the tier Part 1 actually
-  // played, so the typing plate + arrow sit correctly on 1080p/4K too.
+  v2LoadP=pickSrc(v2,'part2');
+  const ok1=await pickSrc(v1,'part1');
+  if(!ok1) return fatal();
   const p1p=tierP1(tierNameOf(v1._tier||''));
   if(p1p) P1=expandBox(p1p);
-  v2._t2=TRACKS_BY_TIER[v2Tier]||null;
   layout(); box1();
-  if(RM){
-    const done=()=>{ v1.currentTime=Math.max(0,(v1.duration||1.5)-.05); };
-    v1.readyState>=1?done():v1.addEventListener('loadedmetadata',done,{once:true});
-    v1.addEventListener('seeked',showPlate,{once:true}); return;
-  }
   startV1();
+  await v2LoadP;
+  v2._t2=TRACKS_BY_TIER[v2Tier]||null;
 })();
 
 /* ---------- confirm: engrave -> glint -> part2 ---------- */
 let lookupP=null;
+let v2WarmP=null;
 async function confirm(){
   if(state.stage!=='typing') return;
   state.stage='engrave'; input.blur(); go.disabled=true; go.classList.remove('live'); go.classList.add('gone'); $('#caret')?.remove(); msg.classList.remove('show');
   lookupP=lookupVehicle(state.plate);
+  v2.muted=true;
+  v2WarmP=ensureV2Ready(false);
   playStampSound();
   plate.classList.add('engrave');
   await wait(520);
   playGlintSound();
   plate.classList.add('glint-go');
   await wait(900);
-  if(RM){ return openScreen(); }
   startDrive();
 }
 
@@ -982,96 +1006,77 @@ function placeStar(s){
    only difference is that from here on the number is a fixed texture, which
    stops the per-frame re-rasterisation that was tearing the glyphs. */
 function rasterizeNumber(){
-  const txt=state.plate; if(!txt||!numCanvas) return false;
-  const cv=numCanvas, S=cv.width/908, c=cv.getContext('2d'); if(!c) return false;
-  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.scale(S,S);
-  const cs=getComputedStyle(chars);
-  const fs=parseFloat(cs.fontSize)||156, gap=parseFloat(cs.gap)||0;
-  c.font='700 '+fs+'px '+cs.fontFamily;
-  c.textAlign='center'; c.textBaseline='middle';
-  const ws=[...txt].map(ch=>c.measureText(ch).width);
-  const total=ws.reduce((a,b)=>a+b,0)+gap*Math.max(0,txt.length-1);
-  let x=(908-total)/2+NUM_SHIFT_X;             // same centring nudge as the live text
-  const y0=100+NUM_SHIFT_Y;
-  if(NUM_SOFTEN>0) c.filter='blur('+NUM_SOFTEN+'px)';   // soften so it blends with the plate
-  for(let i=0;i<txt.length;i++){
-    const cxp=x+ws[i]/2;
-    c.fillStyle='rgba(255,255,255,.55)'; c.fillText(txt[i],cxp,y0-fs*0.024); // engraved top highlight
-    c.fillStyle='rgba(0,0,0,.5)';        c.fillText(txt[i],cxp,y0+fs*0.026); // engraved bottom shade
-    c.fillStyle='rgba(0,0,0,.28)';       c.fillText(txt[i],cxp+fs*0.012,y0+fs*0.02);
-    c.fillStyle='#1a1c22';               c.fillText(txt[i],cxp,y0);           // the number itself
-    x+=ws[i]+gap;
-  }
-  if(NUM_SOFTEN>0) c.filter='none';
-  return true;
+  try{
+    const txt=state.plate; if(!txt||!numCanvas) return false;
+    const cv=numCanvas, S=cv.width/908, c=cv.getContext('2d'); if(!c) return false;
+    c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.scale(S,S);
+    const cs=getComputedStyle(chars);
+    const fs=parseFloat(cs.fontSize)||156, gap=parseFloat(cs.gap)||0;
+    c.font='700 '+fs+'px '+cs.fontFamily;
+    c.textAlign='center'; c.textBaseline='middle';
+    const ws=[...txt].map(ch=>c.measureText(ch).width);
+    const total=ws.reduce((a,b)=>a+b,0)+gap*Math.max(0,txt.length-1);
+    let x=(908-total)/2+NUM_SHIFT_X;             // same centring nudge as the live text
+    const y0=100+NUM_SHIFT_Y;
+    if(NUM_SOFTEN>0){ try{ c.filter='blur('+NUM_SOFTEN+'px)'; }catch(_){} }
+    for(let i=0;i<txt.length;i++){
+      const cxp=x+ws[i]/2;
+      c.fillStyle='rgba(255,255,255,.55)'; c.fillText(txt[i],cxp,y0-fs*0.024); // engraved top highlight
+      c.fillStyle='rgba(0,0,0,.5)';        c.fillText(txt[i],cxp,y0+fs*0.026); // engraved bottom shade
+      c.fillStyle='rgba(0,0,0,.28)';       c.fillText(txt[i],cxp+fs*0.012,y0+fs*0.02);
+      c.fillStyle='#1a1c22';               c.fillText(txt[i],cxp,y0);           // the number itself
+      x+=ws[i]+gap;
+    }
+    if(NUM_SOFTEN>0){ try{ c.filter='none'; }catch(_){} }
+    return true;
+  }catch(_){ return false; }
 }
 
 async function startDrive(){
   state.stage='drive';
   if(rasterizeNumber()) plate.classList.add('raster');   // freeze the number into a static texture (falls back to live text if unavailable)
-  v2.currentTime=0; v2.muted=!state.sound;
+  if(v2WarmP){ try{ await Promise.race([v2WarmP, wait(600)]); }catch(_){} }
+  await ensureV2Ready(false);
+  v2.muted=true;
+  if(v2.currentTime>0.05){ try{ v2.currentTime=0; }catch(_){} }
   playCarSound();
   const q0=quadAt(0);
   if(q0) lastQuad=q0.slice();               // resize safety: remember the drive quad before any paint
 
-  /* HARD Part1 -> Part2 handoff (no cross-fade).
-     The overlay must NEVER sit at the Part-2 position while the Part-1
-     frozen frame is still visible: that gap (it existed while waiting for
-     v2's first decoded frame) reads as the engraved number jumping to a
-     new position and flickering between the two plates. So: wait for
-     Part-2 frame 0 to be decoded FIRST, and only then apply the whole
-     swap — hide v1, move the overlay onto Part-2's frame-0 quad, show v2 —
-     in ONE synchronous style batch, which the browser paints as a single
-     frame. There is no intermediate paint in which the number can appear
-     anywhere except on the plate that is on screen. */
-  if(v2.readyState<2){
-    await new Promise(r=>{ const d=setTimeout(r,800); v2.addEventListener('loadeddata',()=>{clearTimeout(d);r();},{once:true}); });
-  }
   v2.style.transition='none';                 // kill any opacity transition on the video: the cut must be instantaneous
   plate.style.transition='none';               // no transition of any kind on the overlay while it is tracking
 
-  /* WARM-UP BEFORE THE CUT.
-     Starting a freshly-decoded video can stall for a few hundred ms while the
-     decoder produces its first PRESENTED frame. On a slower machine that stall
-     showed up as the Part-2 plate FREEZING on frame 0 for ~0.3 s and then
-     jumping into motion — which reads as a flicker/jump at the handoff. So we
-     start Part-2 HIDDEN and wait until it is actually presenting frames; only
-     THEN do the visible cut (hide v1, lock the overlay to Part-2's CURRENT
-     quad, show v2) in one synchronous batch. The user keeps seeing the engraved
-     Part-1 plate until Part-2 is genuinely rolling, so there is no frozen frame
-     and no jump — the cut is still instantaneous. */
-  v2.style.opacity=0;
-  try{ await v2.play(); }
-  catch(e){ if(state.sound){ v2.muted=true; try{ await v2.play(); }catch(_){ return afterDrive(); } } else return afterDrive(); }
-  await new Promise(r=>{
-    let to=null;
-    const done=()=>{ clearTimeout(to); r(); };
-    to=setTimeout(done,900);                   // never wait longer than 900 ms
-    if('requestVideoFrameCallback' in v2) v2.requestVideoFrameCallback(done);
-    else v2.addEventListener('timeupdate',done,{once:true});
-  });
-  const qc=quadAt(v2.currentTime)||q0;         // Part-2's CURRENT frame (not necessarily 0)
+  // Make v2 visible and hide v1 before/during playback so the compositor renders every frame from t=0
   v1.pause();
-  v1.style.visibility='hidden';               // Part 1 disappears in the same frame Part 2 appears
-  if(qc) setQuad(qc);                         // overlay locks onto Part-2's plate quad in the SAME batch
-  v2.style.opacity=1;
+  v1.style.visibility='hidden';
+  v2.style.zIndex='1';
+  v2.style.opacity='1';
+  if(q0) setQuad(q0);
 
-  /* Keep the tracking state monotonic.  A browser video callback can very
-     occasionally report a stale mediaTime while the frame stream is moving
-     forward.  Applying that stale time would send the plate overlay back to
-     an old quad for one or two frames, which looks like the registration
-     number flickering/floating.  Never move the overlay backwards. */
+  let played=false;
+  try{
+    await v2.play();
+    played=true;
+  }catch(_){
+    // Release v1 hardware decoder and fall back to base part2.mp4 if needed
+    try{ v1.removeAttribute('src'); v1.load(); }catch(e){}
+    const okBase=await ensureV2Ready(true);
+    if(okBase){
+      const qb=quadAt(0);
+      if(qb){ lastQuad=qb.slice(); setQuad(qb); }
+      try{ await v2.play(); played=true; }catch(e2){}
+    }
+  }
+  if(!played) return afterDrive();
+
   let lastMediaTime=0;
+  let rvfcTime=0;
 
   const draw=t=>{
-    if(!Number.isFinite(t)) t=v2.currentTime;
+    if(!Number.isFinite(t)) t=v2.currentTime||0;
     if(t < lastMediaTime - 0.08) return;       // stale/stuttering callback: keep the last applied quad
     if(t > lastMediaTime) lastMediaTime=t;
 
-    /* If quadAt() returns null before the hide point (out-of-range or stale
-       keyframe lookup), keep tracking the LAST GOOD quad instead of
-       blanking/re-placing the plate — a one-frame null used to drop the
-       overlay's clip/opacity and read as a flicker. */
     const q=quadAt(t)||(t<PLATE_HIDE_AT&&lastQuad?lastQuad:null);
     if(q && t<PLATE_HIDE_AT){
       setQuad(q);
@@ -1087,16 +1092,31 @@ async function startDrive(){
     }
     placeStar(starAt(t));
   };
-  const tick=(now,meta)=>{
+
+  if('requestVideoFrameCallback' in v2){
+    const onFrame=(now,meta)=>{
+      if(state.stage!=='drive') return;
+      if(meta&&meta.mediaTime!=null) rvfcTime=meta.mediaTime;
+      v2.requestVideoFrameCallback(onFrame);
+    };
+    v2.requestVideoFrameCallback(onFrame);
+  }
+
+  const startWall=performance.now();
+  const rafTick=()=>{
     if(state.stage!=='drive') return;
-    const reported=meta&&meta.mediaTime!=null?meta.mediaTime:v2.currentTime;
-    const t=Math.max(lastMediaTime, reported);
+    if(v2.paused && !v2.ended && performance.now()-startWall<3500){
+      v2.play().catch(()=>{});
+    }
+    const t=Math.max(lastMediaTime, rvfcTime, v2.currentTime||0);
     draw(t);
-    if(t>=STOP || v2.ended){ v2.pause(); return afterDrive(); }
-    next();
+    if(t>=STOP || v2.ended || performance.now()-startWall>5500){
+      v2.pause();
+      return afterDrive();
+    }
+    requestAnimationFrame(rafTick);
   };
-  const next=()=>{ if('requestVideoFrameCallback' in v2) v2.requestVideoFrameCallback(tick); else requestAnimationFrame(tick); };
-  next();
+  requestAnimationFrame(rafTick);
 }
 
 /* ---------- zoom into the infotainment screen ---------- */

@@ -1,4 +1,4 @@
-# InsureDrive intro + site
+# InsureDrive intro + site (uses only your 2 videos)
 
 Files: index.html, part1.mp4, part2.mp4  (keep them in the same folder)
 
