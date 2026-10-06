@@ -18,8 +18,8 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;background:var(--screen);color:var(--txt);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-body.intro-on{overflow:hidden;height:100%}
+html,body{margin:0;background:#efeee9;color:#141414;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body.intro-on{overflow:hidden;height:100%;background:var(--screen);color:var(--txt)}
 button{font:inherit;cursor:pointer}
 a{color:inherit}
 
@@ -115,120 +115,36 @@ a{color:inherit}
 #screenUI{position:absolute;inset:0;z-index:8;display:grid;place-items:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .55s ease;
   background:radial-gradient(120% 90% at 50% 0%,#12336b 0%,var(--screen) 60%)}
 #screenUI.on{opacity:1;pointer-events:auto}
-.dashbar{position:absolute;top:calc(14px + var(--sat));left:22px;right:70px;display:flex;justify-content:space-between;font-size:12px;letter-spacing:.14em;color:#7fa2d8;text-transform:uppercase}
-.panel{width:min(480px,100%);padding:30px 28px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+#intro .dashbar{position:absolute;top:calc(14px + var(--sat));left:22px;right:70px;display:flex;justify-content:space-between;font-size:12px;letter-spacing:.14em;color:#7fa2d8;text-transform:uppercase}
+#intro .panel{width:min(480px,100%);padding:30px 28px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
   border:1px solid rgba(120,170,255,.22);box-shadow:0 20px 70px rgba(0,0,0,.45),inset 0 0 40px rgba(77,178,255,.07)}
-.eyebrow{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
-.miniplate{font:700 15px "Barlow Condensed",sans-serif;letter-spacing:.08em;color:#1a1c22;background:#eee9de;padding:3px 9px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
-.panel h2{margin:12px 0 6px;font-size:26px;letter-spacing:-.01em}
-.panel p{margin:0 0 18px;color:var(--mut);font-size:14px;line-height:1.55}
-.field{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.22);overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.field:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,178,255,.2)}
-.field span{padding:0 12px 0 14px;color:var(--mut);font-weight:600;border-right:1px solid var(--line);height:52px;display:grid;place-items:center}
-.field input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--txt);font:600 20px Inter,sans-serif;letter-spacing:.06em;padding:0 14px;height:52px}
-.consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:12.5px;color:var(--mut);line-height:1.5}
-.consent input{margin-top:2px;accent-color:var(--amber)}
-.btn{width:100%;height:50px;border:0;border-radius:12px;font-weight:700;font-size:15px;color:#2a1500;background:linear-gradient(135deg,var(--amber),var(--amber2));transition:opacity .2s,transform .15s}
-.btn:hover:not(:disabled){transform:translateY(-1px)}
-.btn:disabled{opacity:.35;cursor:not-allowed}
-.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
-.err{min-height:20px;margin-top:10px;font-size:13px;color:#ffb4b4}
-.otps{display:flex;gap:9px;justify-content:space-between;margin-bottom:14px}
-.otps input{width:100%;min-width:0;height:56px;text-align:center;font:700 24px Inter,sans-serif;color:var(--txt);background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:12px;outline:0}
-.otps input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,178,255,.2)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--mut);margin-bottom:14px}
-.linkbtn{background:none;border:0;color:var(--blue);padding:0;font-size:13px}
-.linkbtn:disabled{color:var(--mut);cursor:default}
-.chip{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;background:rgba(255,178,62,.14);color:var(--amber);border:1px solid rgba(255,178,62,.3)}
-.ok-tick{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:rgba(49,208,160,.15);color:var(--ok);font-size:30px;border:1px solid rgba(49,208,160,.4)}
+#intro .eyebrow{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+#intro .miniplate{font:700 15px "Barlow Condensed",sans-serif;letter-spacing:.08em;color:#1a1c22;background:#eee9de;padding:3px 9px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+#intro .panel h2{margin:12px 0 6px;font-size:26px;letter-spacing:-.01em}
+#intro .panel p{margin:0 0 18px;color:var(--mut);font-size:14px;line-height:1.55}
+#intro .field{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.22);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+#intro .field:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,178,255,.2)}
+#intro .field span{padding:0 12px 0 14px;color:var(--mut);font-weight:600;border-right:1px solid var(--line);height:52px;display:grid;place-items:center}
+#intro .field input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--txt);font:600 20px Inter,sans-serif;letter-spacing:.06em;padding:0 14px;height:52px}
+#intro .consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:12.5px;color:var(--mut);line-height:1.5}
+#intro .consent input{margin-top:2px;accent-color:var(--amber)}
+#intro .btn{width:100%;height:50px;border:0;border-radius:12px;font-weight:700;font-size:15px;color:#2a1500;background:linear-gradient(135deg,var(--amber),var(--amber2));transition:opacity .2s,transform .15s}
+#intro .btn:hover:not(:disabled){transform:translateY(-1px)}
+#intro .btn:disabled{opacity:.35;cursor:not-allowed}
+#intro .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+#intro .err{min-height:20px;margin-top:10px;font-size:13px;color:#ffb4b4}
+#intro .otps{display:flex;gap:9px;justify-content:space-between;margin-bottom:14px}
+#intro .otps input{width:100%;min-width:0;height:56px;text-align:center;font:700 24px Inter,sans-serif;color:var(--txt);background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:12px;outline:0}
+#intro .otps input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,178,255,.2)}
+#intro .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--mut);margin-bottom:14px}
+#intro .linkbtn{background:none;border:0;color:var(--blue);padding:0;font-size:13px}
+#intro .linkbtn:disabled{color:var(--mut);cursor:default}
+#intro .chip{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;background:rgba(255,178,62,.14);color:var(--amber);border:1px solid rgba(255,178,62,.3)}
+#intro .ok-tick{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:rgba(49,208,160,.15);color:var(--ok);font-size:30px;border:1px solid rgba(49,208,160,.4)}
 
 /* ================= SITE ================= */
-#site{min-height:100vh;background:linear-gradient(180deg,var(--screen) 0,var(--bg) 480px)}
-.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:22px;padding:calc(12px + var(--sat)) clamp(16px,4vw,48px) 12px;background:rgba(8,24,51,.82);border-bottom:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-.brand{font-weight:800;letter-spacing:-.01em;font-size:19px;display:flex;align-items:center;gap:8px}
-.logo{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--amber),var(--amber2));color:#2a1500;font-size:15px}
-.top nav{display:flex;gap:6px;margin-left:12px;flex:1}
-.top nav a{padding:7px 12px;border-radius:8px;text-decoration:none;color:var(--mut);font-size:14px;font-weight:500}
-.top nav a:hover{background:rgba(255,255,255,.06);color:var(--txt)}
-.who{font-size:13px;color:var(--mut);white-space:nowrap}
-.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
-section.blk{padding:46px 0 10px;scroll-margin-top:70px}
-.h2{display:flex;align-items:baseline;gap:12px;margin:0 0 6px;font-size:28px;letter-spacing:-.02em}
-.sub{margin:0 0 22px;color:var(--mut);font-size:15px;line-height:1.55;max-width:70ch}
-.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
-.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:24px;position:relative}
-.ribbon{position:absolute;top:14px;right:14px}
-.vplate{display:inline-flex;align-items:center;gap:10px;background:#f1ecdf;color:#1c1e24;border-radius:8px;padding:7px 16px;box-shadow:inset 0 0 0 2px #1c1e24,0 6px 18px rgba(0,0,0,.35);
-  font:700 34px "Barlow Condensed",sans-serif;letter-spacing:.1em;text-shadow:0 1px 0 rgba(255,255,255,.8),0 -1px 0 rgba(0,0,0,.45)}
-.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-top:22px}
-.facts div{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
-.facts b{display:block;margin-top:3px;font-size:15px;letter-spacing:0;text-transform:none;color:var(--txt);font-weight:600}
-.status{display:flex;flex-direction:column;gap:14px;justify-content:space-between}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;font-size:13px;font-weight:700}
-.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
-.pill.active{color:var(--ok);background:rgba(49,208,160,.12)}
-.pill.expiring{color:var(--amber);background:rgba(255,178,62,.13)}
-.pill.expired{color:var(--bad);background:rgba(255,107,107,.13)}
-.big{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.big small{font-size:15px;font-weight:600;color:var(--mut);letter-spacing:0}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
-.kv span{color:var(--mut)}
-.kv b{text-align:right;font-weight:600}
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.seg button{background:transparent;border:0;color:var(--mut);padding:8px 14px;font-size:13.5px;font-weight:600}
-.seg button.on{background:rgba(255,178,62,.16);color:var(--amber)}
-select{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:13.5px}
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:var(--card2)}
-table.cmp{border-collapse:collapse;width:100%;min-width:760px}
-.cmp th,.cmp td{padding:14px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);font-size:14px;line-height:1.45}
-.cmp tr:last-child td{border-bottom:0}
-.cmp th:first-child,.cmp td:first-child{position:sticky;left:0;background:var(--card2);color:var(--mut);font-size:12px;letter-spacing:.08em;text-transform:uppercase;width:150px;z-index:1}
-.cmp thead th{font-size:15px;color:var(--txt);text-transform:none;letter-spacing:0;background:#0f2447}
-.cmp thead th small{display:block;color:var(--mut);font-weight:500;margin-top:2px}
-.price{font-size:24px;font-weight:800;letter-spacing:-.02em}
-.tag{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(49,208,160,.14);color:var(--ok)}
-.addons{margin:0;padding-left:16px;color:var(--txt)}
-.learn{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-details.term{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-details.term summary{cursor:pointer;font-weight:700;font-size:16px;list-style:none;display:flex;justify-content:space-between;gap:10px}
-details.term summary::after{content:"+";color:var(--amber);font-size:20px;line-height:1}
-details.term[open] summary::after{content:"–"}
-details.term p{margin:12px 0 0;color:var(--mut);line-height:1.65;font-size:14.5px}
-.tip{border-bottom:1px dotted var(--amber);cursor:help}
-.dashgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
-.vrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.vrow:last-child{border-bottom:0}
-.vrow .vplate{font-size:22px;padding:4px 11px}
-.addv{display:flex;gap:10px;margin-top:16px}
-.addv input{flex:1;min-width:0;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:0 12px;height:44px;font:600 16px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em}
-.addv .btn{width:auto;padding:0 18px;height:44px}
-.rem label{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
-.rem label:last-child{border-bottom:0}
-.rem input{accent-color:var(--amber);width:18px;height:18px}
-footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px solid var(--line);color:var(--mut);font-size:13px;line-height:1.7}
-.sample{font-size:12px;color:var(--amber);margin-left:auto}
+#site{min-height:100vh;background:#efeee9;color:#141414}
 
-/* checkout modal */
-.modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(3,10,24,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.sheet{width:min(520px,100%);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#12294f,#0d2043);border:1px solid rgba(120,170,255,.25);border-radius:20px;padding:26px}
-.sheet h3{margin:0 0 4px;font-size:22px}
-.steps{display:flex;gap:6px;margin:12px 0 18px}
-.steps i{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.12)}
-.steps i.on{background:var(--amber)}
-.line{display:flex;justify-content:space-between;padding:8px 0;font-size:14.5px;border-bottom:1px dashed var(--line)}
-.line.tot{font-size:18px;font-weight:800;border-bottom:0;padding-top:14px}
-.opt{display:flex;gap:12px;align-items:center;padding:12px 14px;margin:8px 0;border:1px solid var(--line);border-radius:12px;font-size:14.5px}
-.opt input{accent-color:var(--amber)}
-.opt span{margin-left:auto;color:var(--mut)}
-.x{float:right;background:none;border:0;color:var(--mut);font-size:22px}
-
-@media (max-width:860px){
-  .grid2,.dashgrid,.learn{grid-template-columns:1fr}
-  .top nav{display:none}
-  .who{margin-left:auto}
-  .big{font-size:36px}
-}
 @media (prefers-reduced-motion:reduce){
   .ch,#go.live,#caret,#phold b{animation:none!important}
 }
@@ -263,119 +179,15 @@ footer{margin-top:60px;padding:30px 0 calc(40px + var(--sab));border-top:1px sol
 
   <div id="fatal" hidden><div><h2>Intro videos not found</h2>Put <code>part1.mp4</code> and <code>part2.mp4</code> (plus optional <code>_1080</code>/<code>_4k</code> variants) in the same folder as <code>index.html</code> and open the page through a local server (see README).</div></div>
 
-  <div id="screenUI">
-    <div class="dashbar"><span id="clk">--:--</span><span>InsureDrive OS</span><span>5G ▂▄▆</span></div>
-
-    <div class="panel" data-step="phone">
-      <div class="eyebrow"><span class="miniplate" id="miniPlate"></span><span>Vehicle received</span></div>
-      <h2>Enter your phone number</h2>
-      <p>We’ll text a 6-digit code to confirm it’s you before showing your policy details.</p>
-      <div class="field"><span>+91</span><input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="98XXXXXXXX" autocomplete="tel-national" aria-label="Mobile number"></div>
-      <label class="consent"><input type="checkbox" id="consent"><span>I agree to the Terms and Privacy Policy and allow InsureDrive to fetch my vehicle and policy details using this number and registration.</span></label>
-      <button class="btn" id="sendOtp" type="button" disabled>Send OTP</button>
-      <div class="err" id="phoneErr" role="alert"></div>
-    </div>
-
-    <div class="panel" data-step="otp" hidden>
-      <div class="eyebrow"><span class="miniplate" id="miniPlate2"></span><span>OTP sent</span></div>
-      <h2>Enter the 6-digit code</h2>
-      <p>Sent to <b id="sentTo"></b>. <button class="linkbtn" id="editPhone" type="button">Change</button></p>
-      <div class="otps" id="otps"></div>
-      <div class="row"><span id="timer"></span><button class="linkbtn" id="resend" type="button" disabled>Resend OTP</button></div>
-      <button class="btn" id="verify" type="button" disabled>Verify &amp; continue</button>
-      <div class="err" id="otpErr" role="alert"></div>
-      <div id="demoHint" style="margin-top:8px"><span class="chip">Demo mode · use 123456</span></div>
-    </div>
-
-    <div class="panel" data-step="done" hidden style="text-align:center">
-      <div class="ok-tick">✓</div>
-      <h2>You’re verified</h2>
-      <p id="doneMsg">Fetching your vehicle and policy details…</p>
-    </div>
-  </div>
+  <div id="screenUI"></div>
 </div>
 
 <!-- ================= SITE ================= -->
-<div id="site" hidden>
-  <header class="top">
-    <div class="brand"><span class="logo">◈</span>InsureDrive</div>
-    <nav>
-      <a href="#status">My vehicle</a><a href="#compare">Compare</a><a href="#learn">Explain it</a><a href="#dash">Dashboard</a>
-    </nav>
-    <div class="who" id="who"></div>
-  </header>
-
-  <main class="wrap">
-    <section class="blk" id="status" style="padding-top:34px">
-      <h1 class="h2" style="font-size:34px">Your vehicle &amp; policy</h1>
-      <p class="sub">Check your cover, see when it expires and renew in a couple of taps.</p>
-      <div class="grid2">
-        <div class="card">
-          <span class="chip ribbon">Sample data</span>
-          <div class="vplate" id="vPlate"></div>
-          <div class="facts" id="vFacts"></div>
-        </div>
-        <div class="card status" id="vStatus"></div>
-      </div>
-    </section>
-
-    <section class="blk" id="compare">
-      <h2 class="h2">Compare policies <span class="sample">Sample quotes — connect insurer / aggregator APIs for live prices</span></h2>
-      <p class="sub">Premium, IDV, cover, add-ons, claim settlement ratio and cashless garages, side by side.</p>
-      <div class="tools">
-        <div class="seg" id="typeSeg">
-          <button data-t="all" class="on">All</button><button data-t="comprehensive">Comprehensive</button><button data-t="third-party">Third-party</button>
-        </div>
-        <select id="sortSel" aria-label="Sort"><option value="asc">Premium: low to high</option><option value="desc">Premium: high to low</option><option value="csr">Claim ratio: best first</option></select>
-      </div>
-      <div class="tablewrap"><table class="cmp" id="cmp"></table></div>
-    </section>
-
-    <section class="blk" id="learn">
-      <h2 class="h2">Explain it simply</h2>
-      <p class="sub">The jargon, in plain language.</p>
-      <div class="learn" id="learnGrid"></div>
-    </section>
-
-    <section class="blk" id="dash">
-      <h2 class="h2">Dashboard</h2>
-      <p class="sub">Your saved vehicles and policy reminders.</p>
-      <div class="dashgrid">
-        <div class="card">
-          <h3 style="margin:0 0 6px">Saved vehicles</h3>
-          <div id="vList"></div>
-          <form class="addv" id="addForm" autocomplete="off">
-            <input id="addPlate" placeholder="Add another vehicle e.g. KA01AB1234" maxlength="14" aria-label="Add vehicle number">
-            <button class="btn" type="submit">Add</button>
-          </form>
-          <div class="err" id="addErr"></div>
-        </div>
-        <div class="card rem">
-          <h3 style="margin:0 0 6px">Renewal reminders</h3>
-          <label><input type="checkbox" data-d="30"> 30 days before expiry</label>
-          <label><input type="checkbox" data-d="15"> 15 days before expiry</label>
-          <label><input type="checkbox" data-d="7"> 7 days before expiry</label>
-          <p style="margin:12px 0 0;font-size:12.5px;color:var(--mut)">Reminders are saved on this device for now. Connect your backend to send SMS / email.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div class="wrap">
-    <footer>
-      Personal data (phone number, vehicle details) is collected only with your consent, encrypted in transit and at rest, and used only to show and renew your policy.
-      Quotes are indicative and shown for demonstration. Insurance is the subject matter of solicitation; follow IRDAI and DPDP Act requirements when you go live.
-    </footer>
-  </div>
-
-  <div class="modal" id="checkout" hidden role="dialog" aria-modal="true" aria-labelledby="coTitle">
-    <div class="sheet" id="coBody"></div>
-  </div>
-</div>
+<div id="site" hidden></div>
 
 <!-- Dense per-frame calibration produced by write_tracks.py (optional: the page
      falls back to the embedded tables below if this file is not present). -->
-<script src="tracks.js"></script>
+<script src="./tracks.js" vite-ignore></script>
 
 <script>
 (()=>{
@@ -577,6 +389,7 @@ const STAR=[[2.5,.27,.53,.04],[2.6,.2,.58,.05],[2.68,.12,.64,.06],[2.75,.034,.68
 const SCREEN={x:.30,y:.43,w:.345,h:.22}; // infotainment glass in the frame at STOP
 
 /* ---------- stubs: swap for your real backend ---------- */
+function sampleVehicle(p){ return {plate:p}; }
 async function sendOtp(phone){ await wait(700); return {ok:true}; }                     // POST /api/otp/send   (MSG91 / Twilio)
 async function verifyOtp(phone,code){ await wait(600); return {ok:code==='123456'}; }     // POST /api/otp/verify
 async function lookupVehicle(plate){ await wait(500); return sampleVehicle(plate); }      // vehicle-registration lookup provider
@@ -1136,171 +949,24 @@ async function afterDrive(){
 }
 function openScreen(){
   state.stage='screen';
-  $('#miniPlate').textContent=state.plate; $('#miniPlate2').textContent=state.plate;
-  screenUI.classList.add('on');
-  $('#demoHint').hidden=!DEMO;
-  setTimeout(()=>$('#phone').focus({preventScroll:true}),450);
+  window.__INITIAL_PLATE__=state.plate;
+  $('#site').hidden=false;
+  document.body.classList.remove('intro-on');
+  scrollTo(0,0);
+  window.dispatchEvent(new CustomEvent('insuredrive:open',{detail:{plate:state.plate,mobile:state.phone}}));
+  requestAnimationFrame(()=>{
+    intro.classList.add('out');
+    setTimeout(()=>{ v1.pause(); v2.pause(); intro.remove(); },800);
+  });
 }
-const tickClock=()=>{ $('#clk').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}); };
+if(/[?&]autostart=1/.test(location.search)){
+  state.plate='WB02AB1234';
+  setTimeout(openScreen,50);
+}
+const tickClock=()=>{ if($('#clk')) $('#clk').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}); };
 tickClock(); setInterval(tickClock,30000);
-
-/* ---------- phone + OTP (on the car screen) ---------- */
-const phone=$('#phone'), consent=$('#consent'), sendBtn=$('#sendOtp');
-const showStep=n=>$$('#screenUI .panel').forEach(p=>p.hidden=p.dataset.step!==n);
-const phoneOk=()=>/^[6-9]\d{9}$/.test(phone.value);
-function phoneState(){ phone.value=phone.value.replace(/\D/g,'').slice(0,10); sendBtn.disabled=!(phoneOk()&&consent.checked); $('#phoneErr').textContent=(phone.value.length===10&&!phoneOk())?'Enter a valid 10-digit Indian mobile number':''; }
-phone.addEventListener('input',phoneState); consent.addEventListener('change',phoneState);
-phone.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!sendBtn.disabled) sendBtn.click(); });
-
-const otpBox=$('#otps');
-otpBox.innerHTML=Array.from({length:6},(_,i)=>'<input inputmode="numeric" maxlength="1" autocomplete="'+(i?'off':'one-time-code')+'" aria-label="Digit '+(i+1)+'">').join('');
-const otpIn=$$('input',otpBox), code=()=>otpIn.map(i=>i.value).join('');
-otpIn.forEach((el,i)=>{
-  el.addEventListener('input',()=>{ el.value=el.value.replace(/\D/g,'').slice(-1); if(el.value&&i<5) otpIn[i+1].focus(); $('#verify').disabled=code().length<6; $('#otpErr').textContent=''; if(code().length===6) $('#verify').click(); });
-  el.addEventListener('keydown',e=>{ if(e.key==='Backspace'&&!el.value&&i>0) otpIn[i-1].focus(); if(e.key==='Enter'&&code().length===6) $('#verify').click(); });
-  el.addEventListener('paste',e=>{ const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6); if(!t) return; e.preventDefault(); t.split('').forEach((c,k)=>otpIn[k].value=c); otpIn[Math.min(t.length,5)].focus(); $('#verify').disabled=t.length<6; if(t.length===6) $('#verify').click(); });
-});
-let tmr=null;
-function startTimer(){ let n=30; const r=$('#resend'), t=$('#timer'); r.disabled=true; clearInterval(tmr);
-  const f=()=>{ t.textContent=n>0?'Resend in 0:'+String(n).padStart(2,'0'):''; if(n<=0){ r.disabled=false; clearInterval(tmr);} n--; }; f(); tmr=setInterval(f,1000); }
-async function doSend(){
-  sendBtn.disabled=true; sendBtn.textContent='Sending…'; $('#phoneErr').textContent='';
-  try{ const r=await sendOtp(phone.value); if(!r.ok) throw 0;
-    state.phone=phone.value; $('#sentTo').textContent='+91 '+phone.value.replace(/(\d{5})(\d{5})/,'$1 $2');
-    showStep('otp'); otpIn.forEach(i=>i.value=''); $('#verify').disabled=true; otpIn[0].focus(); startTimer();
-  }catch(e){ $('#phoneErr').textContent='Couldn’t send the OTP. Check your connection and try again.'; }
-  sendBtn.textContent='Send OTP'; phoneState();
-}
-sendBtn.addEventListener('click',doSend);
-$('#resend').addEventListener('click',async()=>{ $('#otpErr').textContent=''; try{ await sendOtp(state.phone); startTimer(); }catch(e){ $('#otpErr').textContent='Couldn’t resend. Try again.'; } });
-$('#editPhone').addEventListener('click',()=>{ showStep('phone'); phone.focus(); });
-$('#verify').addEventListener('click',async()=>{
-  const b=$('#verify'); if(code().length<6||b.disabled&&b.dataset.busy) return;
-  b.disabled=true; b.dataset.busy=1; b.textContent='Verifying…';
-  let ok=false; try{ ok=(await verifyOtp(state.phone,code())).ok; }catch(e){}
-  b.textContent='Verify & continue'; delete b.dataset.busy;
-  if(!ok){ $('#otpErr').textContent='That code isn’t right. Try again.'; otpIn.forEach(i=>i.value=''); otpIn[0].focus(); b.disabled=true; return; }
-  showStep('done');
-  try{ state.vehicle=await Promise.race([lookupP, wait(10000).then(()=>{throw 0;})]); }
-  catch(e){ state.vehicle=sampleVehicle(state.plate); $('#doneMsg').textContent='Showing sample details — the lookup took too long.'; }
-  await wait(700); openSite();
-});
-
-/* ================= SITE DATA ================= */
-const STATES={MH:'Maharashtra',DL:'Delhi',KA:'Karnataka',TN:'Tamil Nadu',WB:'West Bengal',UP:'Uttar Pradesh',GJ:'Gujarat',RJ:'Rajasthan',TS:'Telangana',TG:'Telangana',AP:'Andhra Pradesh',KL:'Kerala',MP:'Madhya Pradesh',HR:'Haryana',PB:'Punjab',BR:'Bihar',OR:'Odisha',OD:'Odisha',AS:'Assam',JH:'Jharkhand',CG:'Chhattisgarh',UK:'Uttarakhand',HP:'Himachal Pradesh',GA:'Goa',JK:'Jammu & Kashmir',CH:'Chandigarh'};
-const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
-const fdate=d=>d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-function daysLeft(p){ let h=0; for(let i=0;i<p.length;i++) h+=p.charCodeAt(i)*(i+7); return (h%61)-14; }
-function statusOf(p){ const d=daysLeft(p), exp=new Date(Date.now()+d*864e5); return {d,exp,kind:d<0?'expired':d<=30?'expiring':'active'}; }
-function sampleVehicle(p){ return {plate:p, state:BH.test(p)?'Bharat (BH) series':(STATES[p.slice(0,2)]||'—'), rto:BH.test(p)?'—':p.replace(/^([A-Z]{2}\d{1,2}).*$/,'$1'), make:'Sample SUV · 2.0 L', fuel:'Petrol', reg:'2022', insurer:'Sample Insurer Ltd', ncb:'35%', type:'Comprehensive'}; }
-
-const POLICIES=[
- {id:'p1',insurer:'Shield General',plan:'Comprehensive Plus',type:'comprehensive',premium:14850,idv:650000,coverage:'Own damage + third party + ₹15 L personal accident',addons:['Zero depreciation','Roadside assistance','Engine protection'],csr:96.1,garages:5400},
- {id:'p2',insurer:'Horizon Assure',plan:'Smart Cover',type:'comprehensive',premium:12990,idv:640000,coverage:'Own damage + third party + ₹15 L personal accident',addons:['Roadside assistance','Consumables cover'],csr:93.8,garages:3900},
- {id:'p3',insurer:'Peak Mutual',plan:'Zero-Dep Elite',type:'comprehensive',premium:17420,idv:670000,coverage:'Own damage + third party + ₹15 L personal accident',addons:['Zero depreciation','Return to invoice','Key replacement','Roadside assistance'],csr:97.0,garages:6200},
- {id:'p4',insurer:'Nova Insure',plan:'Third-Party Only',type:'third-party',premium:3416,idv:null,coverage:'Third-party injury, death and property damage only',addons:[],csr:91.2,garages:null}
-];
-const EXTRAS=[{id:'zd',label:'Zero depreciation',price:2100},{id:'rsa',label:'Roadside assistance',price:499},{id:'eng',label:'Engine protection',price:1250},{id:'ncb',label:'NCB protect',price:650}];
-const TERMS=[
- ['IDV (Insured Declared Value)','The most your insurer will pay if the vehicle is stolen or damaged beyond repair. It is roughly the market value minus depreciation. A higher IDV means a higher premium but a bigger payout; setting it too low can leave you under-covered.'],
- ['Zero depreciation','Normally the insurer deducts depreciation from the cost of replaced parts, so you pay the difference. Zero-dep removes that deduction, so you pay far less at claim time. It mostly makes sense for newer vehicles.'],
- ['NCB (No Claim Bonus)','A discount on the own-damage part of your premium for every claim-free year, from 20% up to 50%. It belongs to you, not the vehicle, and moves with you to a new insurer. A claim usually resets it unless you add NCB protect.'],
- ['Third-party vs comprehensive','Third-party covers injury, death or property damage you cause to others and is required by law. Comprehensive includes third-party plus damage to your own vehicle from accidents, fire, theft and natural calamities.']
-];
-
-/* ================= SITE ================= */
-function openSite(){
-  const v=state.vehicle||sampleVehicle(state.plate), sx=statusOf(v.plate);
-  $('#site').hidden=false; document.body.classList.remove('intro-on'); scrollTo(0,0);
-  $('#who').textContent='+91 '+state.phone.replace(/(\d{5})(\d{5})/,'$1 $2');
-  $('#vPlate').textContent=v.plate;
-  $('#vFacts').innerHTML=[['Make & model',v.make],['Fuel',v.fuel],['State',v.state],['RTO code',v.rto],['Registered',v.reg],['NCB',v.ncb]].map(([a,b])=>'<div>'+a+'<b>'+b+'</b></div>').join('');
-  const label={active:'Active',expiring:'Expiring soon',expired:'Expired'}[sx.kind];
-  const big=sx.d<0?Math.abs(sx.d)+' <small>days ago</small>':sx.d+' <small>days left</small>';
-  $('#vStatus').innerHTML='<div><span class="pill '+sx.kind+'">'+label+'</span></div><div class="big">'+big+'</div>'+
-    '<div class="kv"><span>Current insurer</span><b>'+v.insurer+'</b><span>Plan type</span><b>'+v.type+'</b><span>Expiry date</span><b>'+fdate(sx.exp)+'</b></div>'+
-    '<button class="btn" id="renewTop" type="button">'+(sx.kind==='active'?'Renew early':'Renew now')+'</button>';
-  $('#renewTop').addEventListener('click',()=>{ $('#compare').scrollIntoView({behavior:'smooth'}); });
-  renderCmp(); renderLearn(); renderDash();
-  // hand off: same blue as the car screen, so it just fades
-  requestAnimationFrame(()=>{ intro.classList.add('out'); setTimeout(()=>{ v1.pause(); v2.pause(); intro.remove(); },800); });
-}
-
-let fType='all', fSort='asc';
-function renderCmp(){
-  let list=POLICIES.filter(p=>fType==='all'||p.type===fType);
-  list=[...list].sort((a,b)=>fSort==='asc'?a.premium-b.premium:fSort==='desc'?b.premium-a.premium:b.csr-a.csr);
-  const minP=Math.min(...list.map(p=>p.premium)), maxC=Math.max(...list.map(p=>p.csr));
-  const row=(l,f)=>'<tr><td>'+l+'</td>'+list.map(f).join('')+'</tr>';
-  $('#cmp').innerHTML='<thead><tr><th></th>'+list.map(p=>'<th>'+p.insurer+'<small>'+p.plan+'</small></th>').join('')+'</tr></thead><tbody>'+
-   row('Premium / year',p=>'<td><div class="price">'+fmt(p.premium)+'</div><small style="color:var(--mut)">excl. 18% GST</small>'+(p.premium===minP&&list.length>1?'<br><span class="tag">Lowest price</span>':'')+'</td>')+
-   row('<span class="tip" title="Insured Declared Value: the most you can claim if the vehicle is stolen or totalled">IDV</span>',p=>'<td>'+(p.idv?fmt(p.idv):'—')+'</td>')+
-   row('Coverage',p=>'<td>'+p.coverage+'</td>')+
-   row('Add-ons included',p=>'<td>'+(p.addons.length?'<ul class="addons">'+p.addons.map(a=>'<li>'+a+'</li>').join('')+'</ul>':'—')+'</td>')+
-   row('Claim settlement',p=>'<td><b>'+p.csr.toFixed(1)+'%</b>'+(p.csr===maxC&&list.length>1?'<br><span class="tag">Best ratio</span>':'')+'</td>')+
-   row('Cashless garages',p=>'<td>'+(p.garages?p.garages.toLocaleString('en-IN')+'+':'—')+'</td>')+
-   row('',p=>'<td><button class="btn" data-id="'+p.id+'" type="button" style="height:44px">Renew with this</button></td>')+'</tbody>';
-  $$('#cmp [data-id]').forEach(b=>b.addEventListener('click',()=>openCheckout(b.dataset.id)));
-}
-$('#typeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; fType=b.dataset.t; $$('#typeSeg button').forEach(x=>x.classList.toggle('on',x===b)); renderCmp(); });
-$('#sortSel').addEventListener('change',e=>{ fSort=e.target.value; renderCmp(); });
-
-function renderLearn(){ $('#learnGrid').innerHTML=TERMS.map(([t,d])=>'<details class="term"><summary>'+t+'</summary><p>'+d+'</p></details>').join(''); }
-
-/* ---- checkout ---- */
-let co=null;
-function openCheckout(id){ co={p:POLICIES.find(p=>p.id===id), extras:new Set(), step:1, pay:'upi'}; paintCo(); $('#checkout').hidden=false; }
-function coTotal(){ const base=co.p.premium+[...co.extras].reduce((s,x)=>s+EXTRAS.find(e=>e.id===x).price,0); const gst=Math.round(base*.18); return {base,gst,total:base+gst}; }
-function paintCo(){
-  const t=coTotal(), p=co.p, body=$('#coBody');
-  const head='<button class="x" id="coX" aria-label="Close">×</button><h3 id="coTitle">Renew · '+p.insurer+'</h3><div class="steps">'+[1,2,3].map(i=>'<i class="'+(i<=co.step?'on':'')+'"></i>').join('')+'</div>';
-  const sum='<div class="line"><span>'+p.plan+'</span><b>'+fmt(p.premium)+'</b></div>'+[...co.extras].map(x=>{const e=EXTRAS.find(z=>z.id===x);return '<div class="line"><span>'+e.label+'</span><b>'+fmt(e.price)+'</b></div>';}).join('')+
-    '<div class="line"><span>GST (18%)</span><b>'+fmt(t.gst)+'</b></div><div class="line tot"><span>Total</span><span>'+fmt(t.total)+'</span></div>';
-  if(co.step===1){
-    const avail=EXTRAS.filter(e=>!p.addons.some(a=>a.toLowerCase().startsWith(e.label.toLowerCase().split(' ')[0])));
-    body.innerHTML=head+'<p style="color:var(--mut);margin:0 0 8px;font-size:14px">Review your plan and optional add-ons.</p>'+
-      avail.map(e=>'<label class="opt"><input type="checkbox" data-x="'+e.id+'" '+(co.extras.has(e.id)?'checked':'')+'>'+e.label+'<span>+'+fmt(e.price)+'</span></label>').join('')+sum+
-      '<button class="btn" id="coNext" type="button" style="margin-top:16px">Continue to payment</button>';
-    $$('[data-x]',body).forEach(c=>c.addEventListener('change',()=>{ c.checked?co.extras.add(c.dataset.x):co.extras.delete(c.dataset.x); paintCo(); }));
-    $('#coNext').addEventListener('click',()=>{ co.step=2; paintCo(); });
-  } else if(co.step===2){
-    body.innerHTML=head+'<p style="color:var(--mut);margin:0 0 8px;font-size:14px">Choose a payment method.</p>'+
-      [['upi','UPI'],['card','Credit / debit card'],['nb','Net banking']].map(([k,l])=>'<label class="opt"><input type="radio" name="pay" value="'+k+'" '+(co.pay===k?'checked':'')+'>'+l+'</label>').join('')+sum+
-      '<button class="btn" id="coPay" type="button" style="margin-top:16px">Pay '+fmt(t.total)+'</button><div class="err">Demo checkout — connect Razorpay or Stripe here. No payment is taken.</div>'+
-      '<button class="linkbtn" id="coBack" type="button">← Back</button>';
-    $$('[name=pay]',body).forEach(r=>r.addEventListener('change',()=>co.pay=r.value));
-    $('#coBack').addEventListener('click',()=>{ co.step=1; paintCo(); });
-    $('#coPay').addEventListener('click',async()=>{ const b=$('#coPay'); b.disabled=true; b.textContent='Processing…'; await wait(1100); co.step=3; paintCo(); });
-  } else {
-    body.innerHTML=head+'<div style="text-align:center;padding:10px 0"><div class="ok-tick">✓</div><h3>Renewal confirmed (demo)</h3><p style="color:var(--mut);font-size:14px;line-height:1.6">Your '+p.plan+' policy with '+p.insurer+' for <b style="color:var(--txt)">'+state.plate+'</b> is renewed. The policy document would be sent to +91 '+state.phone+'.</p><button class="btn ghost" id="coDone" type="button">Close</button></div>';
-    $('#coDone').addEventListener('click',closeCo);
-  }
-  $('#coX').addEventListener('click',closeCo);
-}
-function closeCo(){ $('#checkout').hidden=true; co=null; }
-$('#checkout').addEventListener('click',e=>{ if(e.target.id==='checkout') closeCo(); });
-addEventListener('keydown',e=>{ if(e.key==='Escape'&&co) closeCo(); });
-
-/* ---- dashboard ---- */
-const store={get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }};
-let vehicles=[];
-function renderDash(){
-  vehicles=store.get('idv.vehicles',[]); if(!vehicles.includes(state.plate)) vehicles.unshift(state.plate); store.set('idv.vehicles',vehicles);
-  paintVehicles();
-  const rem=store.get('idv.rem',['30','7']);
-  $$('.rem input').forEach(c=>{ c.checked=rem.includes(c.dataset.d); c.addEventListener('change',()=>store.set('idv.rem',$$('.rem input').filter(x=>x.checked).map(x=>x.dataset.d))); });
-}
-function paintVehicles(){
-  $('#vList').innerHTML=vehicles.map(p=>{ const s=statusOf(p), l={active:'Active',expiring:'Expiring soon',expired:'Expired'}[s.kind];
-    return '<div class="vrow"><span class="vplate">'+p+'</span><span><span class="pill '+s.kind+'">'+l+'</span><br><small style="color:var(--mut)">'+(s.d<0?'Expired ':'Expires ')+fdate(s.exp)+'</small></span></div>'; }).join('');
-}
-$('#addForm').addEventListener('submit',e=>{
-  e.preventDefault(); const v=clean($('#addPlate').value), er=$('#addErr');
-  if(!valid(v)){ er.textContent='Enter a valid number like KA01AB1234'; return; }
-  if(vehicles.includes(v)){ er.textContent='That vehicle is already saved'; return; }
-  er.textContent=''; vehicles.push(v); store.set('idv.vehicles',vehicles); $('#addPlate').value=''; paintVehicles();
-});
 })();
 </script>
+<script type="module" src="/app.jsx"></script>
 </body>
 </html>

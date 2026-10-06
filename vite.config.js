@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -13,6 +14,12 @@ const STATIC_ASSETS = [
 ];
 
 export default defineConfig({
+  base: './',
+  resolve: {
+    alias: {
+      '@': path.resolve(process.cwd(), '.'),
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
@@ -24,6 +31,7 @@ export default defineConfig({
     allowedHosts: true,
   },
   plugins: [
+    tailwindcss(),
     {
       name: 'copy-root-media-assets',
       closeBundle() {
