@@ -50,7 +50,7 @@ const spanVariants = {
   exit: { width: 0, opacity: 0 },
 }
 
-const transition = { delay: 0.1, type: "spring", bounce: 0, duration: 0.6 }
+const transition = { delay: 0.1, type: "spring" as const, bounce: 0, duration: 0.6 }
 
 export function ExpandedTabs({
   tabs,
@@ -83,14 +83,14 @@ export function ExpandedTabs({
   }
 
   const Separator = () => (
-    <div className="h-[24px] w-[1.2px] bg-[#d8d7cf] self-center" aria-hidden="true" />
+    <div className="h-[24px] w-[1.2px] bg-[rgba(46,74,139,0.15)] self-center" aria-hidden="true" />
   )
 
   return (
     <div
       ref={outsideClickRef}
       className={cn(
-        "flex items-center gap-2 rounded-2xl border border-[#d8d7cf] bg-[#ffffff] p-1.5 shadow-sm",
+        "flex items-center gap-2 rounded-2xl border border-[rgba(46,74,139,0.15)] bg-[rgba(255,255,255,0.7)] backdrop-blur-md p-1.5 shadow-sm",
         className
       )}
     >
@@ -115,14 +115,14 @@ export function ExpandedTabs({
             style={
               isSelected
                 ? {
-                    background: "linear-gradient(135deg, #32353b 0%, #1d1f24 55%, #121316 100%)",
+                    background: "linear-gradient(135deg, #3759a6 0%, #2e4a8b 55%, #1f3463 100%)",
                     color: "#ffffff",
-                    border: "1px solid #3f434a",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    border: "1px solid rgba(46, 74, 139, 0.4)",
+                    boxShadow: "0 4px 14px rgba(46, 74, 139, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
                   }
                 : {
                     background: "transparent",
-                    color: "#2b2b28",
+                    color: "#1b1e28",
                     border: "1px solid transparent",
                   }
             }
@@ -130,15 +130,15 @@ export function ExpandedTabs({
               "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300 cursor-pointer",
               isSelected
                 ? cn("font-semibold !text-white", activeColor)
-                : "hover:bg-[#f4f3ee] hover:!text-[#141414]"
+                : "hover:bg-[rgba(46,74,139,0.06)] hover:!text-[#2e4a8b]"
             )}
           >
             <Icon
               size={18}
               className="shrink-0"
               style={{
-                color: isSelected ? "#ffffff" : "#2b2b28",
-                stroke: isSelected ? "#ffffff" : "#2b2b28",
+                color: isSelected ? "#ffffff" : "#2e4a8b",
+                stroke: isSelected ? "#ffffff" : "#2e4a8b",
               }}
             />
             <AnimatePresence initial={false}>

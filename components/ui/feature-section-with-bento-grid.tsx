@@ -63,9 +63,9 @@ function Feature({
             <div>
               <Badge
                 style={{
-                  background: "linear-gradient(135deg, #2c2d30 0%, #18191b 55%, #0f1012 100%)",
+                  background: "linear-gradient(135deg, #3759a6 0%, #2e4a8b 55%, #1f3463 100%)",
                   color: "#ffffff",
-                  borderColor: "#2c2d30",
+                  borderColor: "rgba(46,74,139,0.3)",
                 }}
                 className="text-white shadow-xs"
               >
@@ -73,10 +73,10 @@ function Feature({
               </Badge>
             </div>
             <div className="flex gap-2 flex-col">
-              <h2 className="text-3xl md:text-4xl tracking-tighter max-w-2xl font-semibold text-left text-[#141414]">
+              <h2 className="text-3xl md:text-4xl tracking-tight max-w-2xl font-bold text-left text-[#1b1e28]">
                 {heading}
               </h2>
-              <p className="text-base md:text-lg max-w-xl lg:max-w-2xl leading-relaxed tracking-tight text-[#6e6e68] text-left">
+              <p className="text-base md:text-lg max-w-xl lg:max-w-2xl leading-relaxed tracking-tight text-[#5e6678] text-left">
                 {subheading}
               </p>
             </div>
@@ -91,18 +91,18 @@ function Feature({
                   key={item.title}
                   className={
                     isWide
-                      ? "bg-[#ffffff] border-[1.5px] border-[#d8d7cf] rounded-2xl h-full lg:col-span-2 p-6 min-h-[210px] flex justify-between flex-col gap-6 shadow-xs"
-                      : "bg-[#ffffff] border-[1.5px] border-[#d8d7cf] rounded-2xl p-6 min-h-[210px] flex justify-between flex-col gap-6 shadow-xs"
+                      ? "bg-[rgba(255,255,255,0.7)] backdrop-blur-md border border-[rgba(46,74,139,0.15)] rounded-2xl h-full lg:col-span-2 p-6 min-h-[210px] flex justify-between flex-col gap-6 shadow-[0_8px_32px_rgba(46,74,139,0.06)]"
+                      : "bg-[rgba(255,255,255,0.7)] backdrop-blur-md border border-[rgba(46,74,139,0.15)] rounded-2xl p-6 min-h-[210px] flex justify-between flex-col gap-6 shadow-[0_8px_32px_rgba(46,74,139,0.06)]"
                   }
                 >
-                  <div className="w-11 h-11 rounded-xl bg-[#f4f3ee] border border-[#d8d7cf] flex items-center justify-center text-[#141414]">
-                    <Icon className="w-6 h-6 stroke-[1.75]" />
+                  <div className="w-11 h-11 rounded-xl bg-[rgba(46,74,139,0.08)] border border-[rgba(46,74,139,0.18)] flex items-center justify-center text-[#2e4a8b]">
+                    <Icon className="w-6 h-6 stroke-[1.85]" />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <h3 className="text-xl font-semibold tracking-tight text-[#141414]">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1b1e28]">
                       {item.title}
                     </h3>
-                    <p className="text-[#6e6e68] max-w-2xl text-sm md:text-base leading-relaxed">
+                    <p className="text-[#5e6678] max-w-2xl text-sm md:text-base leading-relaxed">
                       {item.description}
                     </p>
                   </div>

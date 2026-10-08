@@ -4,16 +4,21 @@ import { formatPlate, deriveVehicleDetails, inr, REMINDER_TIMELINE } from "./dat
 export function GarageView({
   activeVehicle,
   onSelectVehicle,
-  savedVehicles,
+  savedVehicles = [],
   setSavedVehicles,
-  savedQuotes,
-  remind,
-  setRemind,
-  commHistory,
-  setCommHistory,
+  savedQuotes = [],
+  remind = [45, 30, 15, 7, 0],
+  setRemind = () => {},
+  commHistory = [],
+  setCommHistory = () => {},
   onOpenConsent,
   onRequestQuoteFromSaved,
 }) {
+  const safeVehicles = Array.isArray(savedVehicles) ? savedVehicles : [];
+  const safeQuotes = Array.isArray(savedQuotes) ? savedQuotes : [];
+  const safeRemind = Array.isArray(remind) ? remind : [45, 30, 15, 7, 0];
+  const safeHistory = Array.isArray(commHistory) ? commHistory : [];
+
   const [newPlate, setNewPlate] = useState("");
   const [newNickname, setNewNickname] = useState("");
   const [err, setErr] = useState("");
@@ -98,10 +103,12 @@ export function GarageView({
                 <div
                   key={item.plate}
                   style={{
-                    padding: "14px",
-                    background: "#fff",
-                    border: isCurrent ? "2px solid var(--ink)" : "1.5px solid var(--line)",
-                    borderRadius: 16,
+                    padding: "16px",
+                    background: "rgba(255,255,255,0.75)",
+                    backdropFilter: "blur(8px)",
+                    border: isCurrent ? "2px solid var(--accent)" : "1px solid var(--glass-border)",
+                    borderRadius: 18,
+                    boxShadow: isCurrent ? "0 6px 20px rgba(46,74,139,0.12)" : "none",
                   }}
                 >
                   <div className="row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
@@ -190,7 +197,7 @@ export function GarageView({
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {REMINDER_TIMELINE.map((r) => {
-              const on = remind.includes(r.days);
+              const on = safeRemind.includes(r.days);
               return (
                 <div
                   key={r.days}
@@ -207,7 +214,7 @@ export function GarageView({
                         type="checkbox"
                         checked={on}
                         onChange={() =>
-                          setRemind(on ? remind.filter((x) => x !== r.days) : [...remind, r.days])
+                          setRemind(on ? safeRemind.filter((x) => x !== r.days) : [...safeRemind, r.days])
                         }
                         style={{ width: 18, height: 18, accentColor: "var(--ink)" }}
                       />
@@ -252,10 +259,10 @@ export function GarageView({
                   className="row"
                   style={{
                     justifyContent: "space-between",
-                    padding: "12px 14px",
-                    background: "#fff",
-                    border: "1.5px solid var(--line)",
-                    borderRadius: 14,
+                    padding: "14px 18px",
+                    background: "rgba(255,255,255,0.75)",
+                    border: "1px solid var(--glass-border)",
+                    borderRadius: 16,
                   }}
                 >
                   <div>
