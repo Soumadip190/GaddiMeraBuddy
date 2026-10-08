@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./src/index.css";
 import { AppleSpotlight } from "./src/components/ui/apple-spotlight.jsx";
 import { searchPlans } from "./src/lib/searchPlans.js";
+import { LearnMorePage } from "./src/LearnMorePage.jsx";
 import { Search, ShieldCheck, Wrench, Shield, TrendingDown } from "lucide-react";
 
 // =========================================================================
@@ -352,8 +353,34 @@ export default function App() {
 
   const navigateTo = (newView) => {
     setView(newView);
+    if (typeof window !== "undefined") {
+      try {
+        const targetPath = newView === "learn-more" ? "/learn-more" : "/";
+        if (window.location.pathname !== targetPath) {
+          window.history.pushState({ view: newView }, "", targetPath + window.location.search);
+        }
+      } catch (_) {}
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.pathname === "/learn-more") {
+      setView("learn-more");
+    }
+    const handlePopState = (e) => {
+      if (window.location.pathname === "/learn-more") {
+        setView("learn-more");
+      } else if (e.state?.view) {
+        setView(e.state.view);
+      } else {
+        setView("overview");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // OTP Handling functions
   const handleDigitChange = (index, value) => {
@@ -481,7 +508,7 @@ export default function App() {
                 strokeWidth="2"
                 strokeLinejoin="round"
               />
-              <path d="M28 10h10v9H22zM42 10h8l8 9H42z" fill="var(--bg)" opacity=".8" />
+              <path d="M28 10h10v9H22zM42 10h8l8 9H42z" fill="var(--bg)" opacity=".85" />
               <circle cx="23" cy="30" r="7" fill="currentColor" />
               <circle cx="23" cy="30" r="2.5" fill="var(--bg)" />
               <circle cx="58" cy="30" r="7" fill="currentColor" />
@@ -489,22 +516,25 @@ export default function App() {
             </symbol>
           </defs>
         </svg>
-        <svg className="car" style={{ top: "12%", "--w": "56px", "--t": "52s", "--d": "0s", "--c": "var(--t-blob-1, #c79a6b)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "10%", "--w": "64px", "--t": "42s", "--d": "-6s", "--c": "#8C5A3C" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "27%", "--w": "72px", "--t": "66s", "--d": "-18s", "--c": "var(--t-blob-2, #a67c52)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "24%", "--w": "76px", "--t": "54s", "--d": "-18s", "--c": "#a67c52" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car" style={{ top: "44%", "--w": "48px", "--t": "48s", "--d": "-9s", "--c": "var(--t-blob-3, #d9b88f)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "38%", "--w": "54px", "--t": "38s", "--d": "-11s", "--c": "#b9770e" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "60%", "--w": "80px", "--t": "72s", "--d": "-30s", "--c": "var(--t-blob-1, #c79a6b)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "54%", "--w": "84px", "--t": "60s", "--d": "-28s", "--c": "#8C5A3C" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car" style={{ top: "76%", "--w": "60px", "--t": "58s", "--d": "-22s", "--c": "var(--t-blob-2, #a67c52)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "70%", "--w": "68px", "--t": "46s", "--d": "-22s", "--c": "#9e6847" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "90%", "--w": "52px", "--t": "50s", "--d": "-5s", "--c": "var(--t-blob-3, #d9b88f)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "84%", "--w": "58px", "--t": "40s", "--d": "-14s", "--c": "#b08968" }} viewBox="0 0 80 40">
+          <use href="#toycar" />
+        </svg>
+        <svg className="car" style={{ top: "93%", "--w": "62px", "--t": "48s", "--d": "-32s", "--c": "#8C5A3C" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
       </div>
@@ -520,7 +550,7 @@ export default function App() {
             </div>
 
             {isVerified ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <nav className="tabs" aria-label="Main">
                   <button
                     type="button"
@@ -545,19 +575,16 @@ export default function App() {
                   </button>
                   <button
                     type="button"
-                    className={`tab ${view === "admin" ? "on" : ""}`}
-                    onClick={() => navigateTo("admin")}
+                    className={`tab ${view === "learn-more" ? "on" : ""}`}
+                    onClick={() => navigateTo("learn-more")}
                   >
-                    Admin ({leads.length})
+                    Learn More
                   </button>
                 </nav>
-                <div className="hidden md:flex items-center gap-2 pl-2 border-l border-[var(--line)]">
+                <div className="hidden md:flex items-center pl-3 border-l border-[rgba(255,235,210,0.18)]">
                   <span className="plate" style={{ fontSize: 13, padding: "2px 7px" }}>
                     <small style={{ fontSize: 8, padding: "1px 3px" }}>IND</small>
                     {car.plate}
-                  </span>
-                  <span className="pill ok" style={{ fontSize: 11, padding: "2px 8px" }}>
-                    Verified ✓
                   </span>
                 </div>
               </div>
@@ -1579,96 +1606,9 @@ export default function App() {
             </div>
           )}
 
-          {/* ================= ADMIN VIEW ================= */}
-          {view === "admin" && (
-            <div className="view on">
-              <div className="head">
-                <div>
-                  <h2>Lead dashboard</h2>
-                  <p className="mut">Callbacks, quotes and renewals in one list.</p>
-                </div>
-              </div>
-
-              <div className="stats">
-                <div className="glass stat">
-                  <b>{leads.length}</b>
-                  <span className="mut">Total leads</span>
-                </div>
-                <div className="glass stat">
-                  <b>{leads.filter((l) => l.status === "New").length}</b>
-                  <span className="mut">Awaiting a call</span>
-                </div>
-                <div className="glass stat">
-                  <b>{leads.filter((l) => l.days >= 0 && l.days <= 45).length}</b>
-                  <span className="mut">Expiring in 45 days</span>
-                </div>
-                <div className="glass stat">
-                  <b>{leads.filter((l) => l.days < 0).length}</b>
-                  <span className="mut">Expired</span>
-                </div>
-              </div>
-
-              <div className="glass tblw">
-                <table className="t">
-                  <thead>
-                    <tr>
-                      <th>Lead</th>
-                      <th>Vehicle</th>
-                      <th>Request</th>
-                      <th>Expiry</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leads.map((l) => (
-                      <tr key={l.id}>
-                        <td>
-                          <b>{l.id}</b>
-                          <div className="mut" style={{ fontSize: 13 }}>
-                            {l.mob}
-                          </div>
-                        </td>
-                        <td>
-                          {l.veh}
-                          <div className="mut" style={{ fontSize: 13 }}>
-                            {l.type}
-                          </div>
-                        </td>
-                        <td>{l.kind}</td>
-                        <td>
-                          <span
-                            className={`pill ${
-                              l.days < 0 ? "bad" : l.days <= 15 ? "warn" : "ok"
-                            }`}
-                          >
-                            {l.days < 0 ? `${Math.abs(l.days)} days ago` : `In ${l.days} days`}
-                          </span>
-                        </td>
-                        <td>
-                          <select
-                            value={l.status}
-                            onChange={(e) => {
-                              const newStatus = e.target.value;
-                              setLeads((prev) =>
-                                prev.map((item) => (item.id === l.id ? { ...item, status: newStatus } : item))
-                              );
-                              showToast(`Lead ${l.id} marked as ${newStatus}`);
-                            }}
-                            aria-label={`Status for ${l.id}`}
-                          >
-                            {["New", "Called", "Quote sent", "Converted", "Lost"].map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          {/* ================= LEARN MORE VIEW ================= */}
+          {view === "learn-more" && (
+            <LearnMorePage car={car} onNavigate={navigateTo} />
           )}
         </>
       )}
