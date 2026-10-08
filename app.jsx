@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import "./src/index.css";
+import { AppleSpotlight } from "./src/components/ui/apple-spotlight.jsx";
+import { searchPlans } from "./src/lib/searchPlans.js";
+import { Search, ShieldCheck, Wrench, Shield, TrendingDown } from "lucide-react";
 
 // =========================================================================
 // DEMO DATA (From user HTML specification)
@@ -190,6 +193,7 @@ export default function App() {
 
   // Dedicated Space for OTP Verification Page
   const [isVerified, setIsVerified] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("9830144829");
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const [otpCountdown, setOtpCountdown] = useState(28);
@@ -198,6 +202,54 @@ export default function App() {
   const [consentWhatsapp, setConsentWhatsapp] = useState(true);
   const [isSubmittingOtp, setIsSubmittingOtp] = useState(false);
   const otpInputRefs = useRef([]);
+
+  // New OTP Redesign States
+  const [step, setStep] = useState(1);
+  const [otpError, setOtpError] = useState("");
+  const [wrongShake, setWrongShake] = useState(false);
+  const [consentExpanded, setConsentExpanded] = useState(false);
+  const [activeSlot, setActiveSlot] = useState(0);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => {
+    const d = new Date();
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      setCurrentTime(d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Spotlight search states
+  const [spotOpen, setSpotOpen] = useState(false);
+  const [spotQuery, setSpotQuery] = useState("");
+  const [highlightId, setHighlightId] = useState(null);
+
+  // Close and reset spotlight when view changes away from plans or if not verified
+  useEffect(() => {
+    if (view !== "plans" || !isVerified) {
+      setSpotOpen(false);
+      setSpotQuery("");
+    }
+  }, [view, isVerified]);
+
+  // Ctrl/Cmd+K listener: active ONLY on the Plans view (view === "plans" && isVerified)
+  useEffect(() => {
+    if (view !== "plans" || !isVerified) return;
+
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setSpotOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [view, isVerified]);
 
   // Toast notifier
   const showToast = (msg) => {
@@ -238,7 +290,6 @@ export default function App() {
     }
   }, [otpCountdown]);
 
-  // Pricing logic
   const hasAddon = (plan, addonId) => {
     return plan.inc.includes(addonId) || (!plan.noAdd && addons.has(addonId));
   };
@@ -272,6 +323,33 @@ export default function App() {
     });
   };
 
+  // Spotlight shortcuts for empty query
+  const spotShortcuts = [
+    { label: "Lowest price", icon: <TrendingDown style={{ width: 13, height: 13 }} /> },
+    { label: "Zero depreciation", icon: <ShieldCheck style={{ width: 13, height: 13 }} /> },
+    { label: "Roadside", icon: <Wrench style={{ width: 13, height: 13 }} /> },
+    { label: "Third party", icon: <Shield style={{ width: 13, height: 13 }} /> },
+  ];
+
+  // Spotlight onSelect: close spotlight, smooth-scroll to plan card, flash ring for 1.8s
+  const handleSpotSelect = (res) => {
+    setSpotOpen(false);
+    const targetPlanId = res.id;
+    if (!targetPlanId) return;
+
+    // Small delay to allow modal exit animation / layout sync
+    setTimeout(() => {
+      const el = document.getElementById(`plan-${targetPlanId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightId(targetPlanId);
+        setTimeout(() => {
+          setHighlightId((curr) => (curr === targetPlanId ? null : curr));
+        }, 1800);
+      }
+    }, 100);
+  };
+
   const navigateTo = (newView) => {
     setView(newView);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -283,14 +361,26 @@ export default function App() {
     const next = [...otpDigits];
     next[index] = val;
     setOtpDigits(next);
+    if (otpError) setOtpError("");
     if (val && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
+      setActiveSlot(index + 1);
+    } else if (val && index === 5) {
+      setActiveSlot(5);
     }
   };
 
   const handleDigitKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        otpInputRefs.current[index - 1]?.focus();
+        setActiveSlot(index - 1);
+      } else {
+        const next = [...otpDigits];
+        next[index] = "";
+        setOtpDigits(next);
+        if (otpError) setOtpError("");
+      }
     }
   };
 
@@ -301,29 +391,51 @@ export default function App() {
       const next = ["", "", "", "", "", ""];
       for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
       setOtpDigits(next);
+      if (otpError) setOtpError("");
       const targetIndex = Math.min(pasted.length, 5);
       otpInputRefs.current[targetIndex]?.focus();
+      setActiveSlot(targetIndex);
     }
   };
 
   const fillDemoOtp = () => {
     setOtpDigits(["1", "2", "3", "4", "5", "6"]);
+    if (otpError) setOtpError("");
+    setActiveSlot(5);
+    otpInputRefs.current[5]?.focus();
     showToast("Demo OTP (123456) filled");
   };
 
   const handleVerifyOtp = () => {
     const code = otpDigits.join("");
     if (code.length < 6) {
-      showToast("Please enter all 6 digits of the OTP");
+      setOtpError("Please enter all 6 digits of the verification code");
+      setWrongShake(true);
+      setTimeout(() => setWrongShake(false), 400);
       return;
     }
+    if (!consentMandatory) {
+      setOtpError("Mandatory underwriting processing consent is required");
+      return;
+    }
+    if (code !== "123456") {
+      setOtpError("Invalid code. Please enter demo code 123456.");
+      setWrongShake(true);
+      setTimeout(() => setWrongShake(false), 400);
+      return;
+    }
+
+    setOtpError("");
     setIsSubmittingOtp(true);
     setTimeout(() => {
       setIsSubmittingOtp(false);
-      setIsVerified(true);
-      showToast(`✓ Phone verified for ${car.plate}! Welcome to InsureDrive.`);
-      navigateTo("overview");
-    }, 500);
+      setVerificationSuccess(true);
+      setTimeout(() => {
+        setIsVerified(true);
+        setView("overview");
+        showToast(`✓ Phone & vehicle verified for ${car.plate}! Access granted.`);
+      }, 700);
+    }, 350);
   };
 
   // Modals & Sheets
@@ -377,98 +489,617 @@ export default function App() {
             </symbol>
           </defs>
         </svg>
-        <svg className="car" style={{ top: "12%", "--w": "56px", "--t": "46s", "--d": "0s", "--c": "var(--b1)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "12%", "--w": "56px", "--t": "52s", "--d": "0s", "--c": "var(--t-blob-1, #c79a6b)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "27%", "--w": "72px", "--t": "58s", "--d": "-18s", "--c": "var(--b2)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "27%", "--w": "72px", "--t": "66s", "--d": "-18s", "--c": "var(--t-blob-2, #a67c52)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car" style={{ top: "44%", "--w": "48px", "--t": "38s", "--d": "-9s", "--c": "var(--b3)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "44%", "--w": "48px", "--t": "48s", "--d": "-9s", "--c": "var(--t-blob-3, #d9b88f)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "60%", "--w": "80px", "--t": "64s", "--d": "-30s", "--c": "var(--b1)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "60%", "--w": "80px", "--t": "72s", "--d": "-30s", "--c": "var(--t-blob-1, #c79a6b)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car" style={{ top: "76%", "--w": "60px", "--t": "50s", "--d": "-22s", "--c": "var(--b2)" }} viewBox="0 0 80 40">
+        <svg className="car" style={{ top: "76%", "--w": "60px", "--t": "58s", "--d": "-22s", "--c": "var(--t-blob-2, #a67c52)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
-        <svg className="car rev" style={{ top: "90%", "--w": "52px", "--t": "42s", "--d": "-5s", "--c": "var(--b3)" }} viewBox="0 0 80 40">
+        <svg className="car rev" style={{ top: "90%", "--w": "52px", "--t": "50s", "--d": "-5s", "--c": "var(--t-blob-3, #d9b88f)" }} viewBox="0 0 80 40">
           <use href="#toycar" />
         </svg>
       </div>
 
       <div className="app">
         {/* Top Header Navigation */}
+        {/* Top Header Navigation */}
         <header className="top">
-          <div className="glass">
-            <div className="brand" onClick={() => navigateTo("overview")}>
+          <div className="glass" style={{ justifyContent: "space-between" }}>
+            <div className="brand" onClick={() => isVerified && navigateTo("overview")}>
               <span className="logo">◈</span>
               <span className="nm2">InsureDrive</span>
             </div>
-            <nav className="tabs" aria-label="Main">
-              <button
-                type="button"
-                className={`tab ${view === "overview" ? "on" : ""}`}
-                onClick={() => navigateTo("overview")}
-              >
-                Overview
-              </button>
-              <button
-                type="button"
-                className={`tab ${view === "plans" || view === "compare" ? "on" : ""}`}
-                onClick={() => navigateTo("plans")}
-              >
-                Plans
-              </button>
-              {/* Space for OTP Page */}
-              <button
-                type="button"
-                className={`tab ${view === "otp" ? "on" : ""}`}
-                onClick={() => navigateTo("otp")}
-              >
-                {isVerified ? "OTP Verified ✓" : "OTP Verification"}
-              </button>
-              <button
-                type="button"
-                className={`tab ${view === "garage" ? "on" : ""}`}
-                onClick={() => navigateTo("garage")}
-              >
-                My Garage
-              </button>
-              <button
-                type="button"
-                className={`tab ${view === "admin" ? "on" : ""}`}
-                onClick={() => navigateTo("admin")}
-              >
-                Admin ({leads.length})
-              </button>
-            </nav>
+
+            {isVerified ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <nav className="tabs" aria-label="Main">
+                  <button
+                    type="button"
+                    className={`tab ${view === "overview" ? "on" : ""}`}
+                    onClick={() => navigateTo("overview")}
+                  >
+                    Overview
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab ${view === "plans" || view === "compare" ? "on" : ""}`}
+                    onClick={() => navigateTo("plans")}
+                  >
+                    Plans
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab ${view === "garage" ? "on" : ""}`}
+                    onClick={() => navigateTo("garage")}
+                  >
+                    My Garage
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab ${view === "admin" ? "on" : ""}`}
+                    onClick={() => navigateTo("admin")}
+                  >
+                    Admin ({leads.length})
+                  </button>
+                </nav>
+                <div className="hidden md:flex items-center gap-2 pl-2 border-l border-[var(--line)]">
+                  <span className="plate" style={{ fontSize: 13, padding: "2px 7px" }}>
+                    <small style={{ fontSize: 8, padding: "1px 3px" }}>IND</small>
+                    {car.plate}
+                  </span>
+                  <span className="pill ok" style={{ fontSize: 11, padding: "2px 8px" }}>
+                    Verified ✓
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--mut)" }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ok)" }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <span>Verification Gateway</span>
+                </div>
+                <span className="plate" style={{ fontSize: 14, padding: "2px 8px 2px 5px" }}>
+                  <small style={{ fontSize: 9, padding: "1px 3px" }}>IND</small>
+                  {car.plate}
+                </span>
+              </div>
+            )}
           </div>
         </header>
 
         {/* MAIN VIEW */}
         <main id="main">
-          {/* ================= OVERVIEW VIEW ================= */}
-          {view === "overview" && (
-            <div className="view on">
-              {!isVerified && (
-                <div
-                  className="glass mb-3 p-3 px-4 rounded-2xl flex items-center justify-between text-sm cursor-pointer border border-blue-200/50"
-                  onClick={() => navigateTo("otp")}
-                  style={{ marginTop: 12, marginBottom: 4 }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                    <span>
-                      <b>Identity verification pending:</b> Complete OTP verification for{" "}
-                      <b>{car.plate}</b> to finalize quote eligibility.
+          {!isVerified ? (
+            <div className="otp2-wrapper">
+              <div className="otp2-bezel">
+                <div className="otp2-screen">
+                  {/* Infotainment Status Bar with Live Clock and Signal / Lock */}
+                  <div className="otp2-statusbar">
+                    <div className="otp2-clock">
+                      <span>{currentTime}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, opacity: 0.85 }}>
+                      <span style={{ fontSize: 10 }}>INFOTAINMENT CONNECT</span>
+                      <span style={{ opacity: 0.4 }}>·</span>
+                      <span style={{ fontSize: 10 }}>VAHAN V3</span>
+                    </div>
+                    <div className="otp2-status-right">
+                      {/* Cellular signal */}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-label="Signal 4G LTE">
+                        <path d="M2 20h.01" />
+                        <path d="M7 20v-4" />
+                        <path d="M12 20v-8" />
+                        <path d="M17 20V4" />
+                      </svg>
+                      {/* Secure lock */}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-label="TLS Encrypted">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Three Step Dots Indicator */}
+                  <div className="otp2-stepper" role="tablist" aria-label="Verification Steps">
+                    <button
+                      type="button"
+                      className={`otp2-step-pill ${step === 1 ? "active" : step > 1 ? "done" : ""}`}
+                      onClick={() => setStep(1)}
+                      aria-current={step === 1 ? "step" : undefined}
+                    >
+                      <span>{step > 1 ? "✓" : "1"}</span>
+                      <span>Confirm</span>
+                    </button>
+                    <span style={{ color: "var(--mut)", opacity: 0.4, fontSize: 11 }}>›</span>
+                    <button
+                      type="button"
+                      className={`otp2-step-pill ${step === 2 ? "active" : verificationSuccess ? "done" : ""}`}
+                      onClick={() => setStep(2)}
+                      aria-current={step === 2 ? "step" : undefined}
+                    >
+                      <span>{verificationSuccess ? "✓" : "2"}</span>
+                      <span>Code</span>
+                    </button>
+                    <span style={{ color: "var(--mut)", opacity: 0.4, fontSize: 11 }}>›</span>
+                    <button
+                      type="button"
+                      className={`otp2-step-pill ${step === 3 || verificationSuccess ? (verificationSuccess ? "done" : "active") : ""}`}
+                      onClick={() => setStep(3)}
+                      aria-current={step === 3 ? "step" : undefined}
+                    >
+                      <span>{verificationSuccess ? "✓" : "3"}</span>
+                      <span>Consent</span>
+                    </button>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="otp2-body">
+                    {/* STEP 1: CONFIRM */}
+                    {step === 1 && (
+                      <>
+                        <div className="otp2-header">
+                          <h2>Confirm Vehicle &amp; Mobile</h2>
+                          <p>
+                            Statutory identity gateway under MoRTH VAHAN &amp; DPDP Act 2023. Verify your mobile number to unlock NCB records and instant policy quotes.
+                          </p>
+                        </div>
+
+                        {/* Vehicle Plate Strip & Make */}
+                        <div className="otp2-vehicle-box">
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                            <div className="otp2-mini-plate">
+                              <span className="otp2-mini-ind">IND</span>
+                              <span className="otp2-mini-chars">{car.plate}</span>
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>
+                                {car.make} ({car.year})
+                              </div>
+                              <div style={{ fontSize: 12.5, color: "var(--mut)", marginTop: 2 }}>
+                                Insurer: <b style={{ color: "var(--ink)" }}>{car.insurer}</b> · Regional Transport Office (RTO)
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="pill warn" style={{ fontSize: 11.5, fontWeight: 700 }}>
+                              Renewal in {car.days} days
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Mobile Number with Inline Edit Field */}
+                        <div className="otp2-phone-box">
+                          <div className="otp2-phone-row">
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                              Registered Mobile Number
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingPhone(!isEditingPhone)}
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: "var(--ink)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                                padding: 0,
+                              }}
+                            >
+                              {isEditingPhone ? "Save Number" : "Change Number"}
+                            </button>
+                          </div>
+
+                          <div className="otp2-phone-input-wrap">
+                            <span className="otp2-phone-prefix">+91</span>
+                            <input
+                              type="tel"
+                              maxLength={10}
+                              value={mobileNumber}
+                              onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                              className="otp2-phone-input"
+                              readOnly={!isEditingPhone}
+                              placeholder="98XXXXXXXX"
+                              aria-label="Registered Mobile Number"
+                            />
+                            <div style={{ paddingRight: 12, display: "flex", alignItems: "center" }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--t-ok-text, #5a3d2b)" }}>
+                                VAHAN Linked ✓
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Step 1 Action */}
+                        <button
+                          type="button"
+                          className="otp2-verify-btn otp2-pulse-ring"
+                          onClick={() => {
+                            setStep(2);
+                            showToast(`OTP dispatched to +91 ${mobileNumber}`);
+                          }}
+                        >
+                          <span>Send OTP to Mobile →</span>
+                        </button>
+                      </>
+                    )}
+
+                    {/* STEP 2: CODE */}
+                    {step === 2 && (
+                      <>
+                        <div className="otp2-header">
+                          <h2>Enter Verification OTP</h2>
+                          <p>
+                            Enter the 6-digit code sent to <b style={{ color: "var(--ink)" }}>+91 {mobileNumber}</b>.{" "}
+                            <button
+                              type="button"
+                              onClick={() => setStep(1)}
+                              style={{
+                                color: "var(--ink)",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                                fontSize: "inherit",
+                                padding: 0,
+                                fontWeight: 600,
+                              }}
+                            >
+                              Edit number
+                            </button>
+                          </p>
+                        </div>
+
+                        {/* Plate-Style OTP Strip */}
+                        <div className="otp2-plate-container">
+                          <div
+                            className={`otp2-plate ${wrongShake ? "otp2-shake" : ""}`}
+                            onPaste={handleOtpPaste}
+                            onClick={() => {
+                              const firstEmpty = otpDigits.findIndex((d) => !d);
+                              const target = firstEmpty === -1 ? 5 : firstEmpty;
+                              otpInputRefs.current[target]?.focus();
+                              setActiveSlot(target);
+                            }}
+                          >
+                            {/* Glint Overlay */}
+                            <div className={`otp2-glint ${verificationSuccess ? "otp2-glint-active" : ""}`} />
+
+                            {/* Left HSRP Stamp */}
+                            <div className="otp2-hsrp">
+                              <div className="otp2-chakra" />
+                              <span className="otp2-hsrp-txt">IND</span>
+                            </div>
+
+                            {/* 6 Digit Slots */}
+                            <div className="otp2-digits">
+                              {otpDigits.map((digit, i) => (
+                                <div
+                                  key={i}
+                                  className="otp2-slot"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    otpInputRefs.current[i]?.focus();
+                                    setActiveSlot(i);
+                                  }}
+                                >
+                                  {digit ? (
+                                    <span
+                                      className={`otp2-glyph ${wrongShake ? "otp2-glyph-bad" : ""} ${
+                                        verificationSuccess ? "otp2-glyph-ok" : ""
+                                      }`}
+                                    >
+                                      {digit}
+                                    </span>
+                                  ) : activeSlot === i ? (
+                                    <span className="otp2-caret" />
+                                  ) : (
+                                    <span className="otp2-dash">–</span>
+                                  )}
+
+                                  {/* Accessible real input overlay */}
+                                  <input
+                                    ref={(el) => (otpInputRefs.current[i] = el)}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    autoComplete="one-time-code"
+                                    value={digit}
+                                    aria-label={`OTP Digit ${i + 1}`}
+                                    onChange={(e) => handleDigitChange(i, e.target.value)}
+                                    onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                                    onFocus={() => setActiveSlot(i)}
+                                    className="otp2-native-input"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Error Feedback Under Plate */}
+                          {otpError && (
+                            <div className="otp2-err" role="alert">
+                              {otpError}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Bar: Resend SVG Ring & Demo Autofill */}
+                        <div className="otp2-action-bar">
+                          <div className="otp2-resend-wrap">
+                            <svg className="otp2-ring-svg" viewBox="0 0 36 36">
+                              <path
+                                className="otp2-ring-bg"
+                                strokeWidth="3"
+                                fill="none"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                              <path
+                                className="otp2-ring-fill"
+                                strokeWidth="3"
+                                strokeDasharray="100"
+                                strokeDashoffset={100 * (1 - Math.max(0, otpCountdown) / 30)}
+                                strokeLinecap="round"
+                                fill="none"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                            </svg>
+                            {otpCountdown > 0 ? (
+                              <span>
+                                Resend in <b style={{ color: "var(--ink)", fontFamily: "var(--mono)" }}>{otpCountdown}s</b>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="otp2-resend-btn"
+                                onClick={() => {
+                                  setOtpCountdown(30);
+                                  showToast("New OTP dispatched via SMS");
+                                }}
+                              >
+                                Resend OTP via SMS
+                              </button>
+                            )}
+                          </div>
+
+                          <button type="button" className="otp2-demo-btn" onClick={fillDemoOtp}>
+                            ⚡ Demo Code: 123456 (Autofill)
+                          </button>
+                        </div>
+
+                        {/* Collapsed Statutory Consent Architecture */}
+                        <div className="otp2-consent-card">
+                          <label className="otp2-consent-row">
+                            <input
+                              type="checkbox"
+                              checked={consentMandatory}
+                              onChange={(e) => setConsentMandatory(e.target.checked)}
+                            />
+                            <span>
+                              <b>Mandatory Underwriting Processing:</b> I authorize InsureDrive to query MoRTH VAHAN &amp; IIB records to verify policy expiry and calculate cashless renewal plans.{" "}
+                              <span style={{ color: "var(--warn)", fontWeight: 700 }}>[Mandatory]</span>
+                            </span>
+                          </label>
+
+                          <button
+                            type="button"
+                            className="otp2-expander-toggle"
+                            onClick={() => setConsentExpanded(!consentExpanded)}
+                          >
+                            <span>
+                              {consentExpanded
+                                ? "▲ Hide optional statutory permissions"
+                                : "▼ What you're agreeing to (2 optional permissions)"}
+                            </span>
+                          </button>
+
+                          {consentExpanded && (
+                            <div className="otp2-sub-consents">
+                              <label className="otp2-consent-row">
+                                <input
+                                  type="checkbox"
+                                  checked={consentReminders}
+                                  onChange={(e) => setConsentReminders(e.target.checked)}
+                                />
+                                <span>
+                                  <b>Expiry Reminders:</b> Send scheduled renewal alerts 45, 30, 15, and 7 days prior to expiry via SMS and email.
+                                </span>
+                              </label>
+
+                              <label className="otp2-consent-row">
+                                <input
+                                  type="checkbox"
+                                  checked={consentWhatsapp}
+                                  onChange={(e) => setConsentWhatsapp(e.target.checked)}
+                                />
+                                <span>
+                                  <b>WhatsApp Renewal Assistant:</b> Enable instant policy PDF dispatch and 24x7 roadside claim support on WhatsApp.
+                                </span>
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Verify Button with Amber Pulse Ring */}
+                        <button
+                          type="button"
+                          disabled={
+                            isSubmittingOtp ||
+                            verificationSuccess ||
+                            !consentMandatory ||
+                            otpDigits.join("").length < 6
+                          }
+                          onClick={handleVerifyOtp}
+                          className={`otp2-verify-btn ${
+                            !isSubmittingOtp &&
+                            !verificationSuccess &&
+                            consentMandatory &&
+                            otpDigits.join("").length === 6
+                              ? "otp2-pulse-ring"
+                              : ""
+                          } ${verificationSuccess ? "otp2-btn-success" : ""}`}
+                        >
+                          {verificationSuccess ? (
+                            <span>✓ Identity Verified! Access Granted</span>
+                          ) : isSubmittingOtp ? (
+                            <span>
+                              <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin inline-block mr-2" />
+                              Verifying credentials with VAHAN...
+                            </span>
+                          ) : (
+                            <span>Verify OTP &amp; Enter InsureDrive →</span>
+                          )}
+                        </button>
+                      </>
+                    )}
+
+                    {/* STEP 3: CONSENT REVIEW (Standalone) */}
+                    {step === 3 && (
+                      <>
+                        <div className="otp2-header">
+                          <h2>Statutory Consent Architecture</h2>
+                          <p>
+                            Digital Personal Data Protection Act 2023 &amp; MoRTH Compliance review for {car.plate}.
+                          </p>
+                        </div>
+
+                        <div className="otp2-consent-card" style={{ gap: 14 }}>
+                          <label className="otp2-consent-row">
+                            <input
+                              type="checkbox"
+                              checked={consentMandatory}
+                              onChange={(e) => setConsentMandatory(e.target.checked)}
+                            />
+                            <span>
+                              <b>Mandatory Underwriting Processing:</b> I authorize InsureDrive to query MoRTH VAHAN and IIB records to retrieve policy expiry details and calculate quotes.{" "}
+                              <span style={{ color: "var(--warn)", fontWeight: 700 }}>[Mandatory]</span>
+                            </span>
+                          </label>
+
+                          <label className="otp2-consent-row">
+                            <input
+                              type="checkbox"
+                              checked={consentReminders}
+                              onChange={(e) => setConsentReminders(e.target.checked)}
+                            />
+                            <span>
+                              <b>Expiry Reminders:</b> Send scheduled renewal alerts 45, 30, 15, and 7 days prior to expiry via SMS and email.
+                            </span>
+                          </label>
+
+                          <label className="otp2-consent-row">
+                            <input
+                              type="checkbox"
+                              checked={consentWhatsapp}
+                              onChange={(e) => setConsentWhatsapp(e.target.checked)}
+                            />
+                            <span>
+                              <b>WhatsApp Renewal Assistant:</b> Enable instant policy PDF dispatch and 24x7 roadside claim support on WhatsApp.
+                            </span>
+                          </label>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <button
+                            type="button"
+                            onClick={() => setStep(2)}
+                            className="btn ghost block"
+                            style={{ flex: 1, height: 50, borderRadius: 12 }}
+                          >
+                            ← Back to OTP Code
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!consentMandatory}
+                            onClick={() => {
+                              if (otpDigits.join("").length === 6) {
+                                handleVerifyOtp();
+                              } else {
+                                setStep(2);
+                                showToast("Enter the 6-digit OTP to complete verification");
+                              }
+                            }}
+                            className={`otp2-verify-btn ${consentMandatory && otpDigits.join("").length === 6 ? "otp2-pulse-ring" : ""}`}
+                            style={{ flex: 1, height: 50 }}
+                          >
+                            {otpDigits.join("").length === 6 ? "Verify & Proceed →" : "Enter Code (Step 2) →"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Trust Badges Footer */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        paddingTop: 10,
+                        borderTop: "1px dashed var(--line)",
+                        fontSize: 11,
+                        color: "var(--mut)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <span>256-Bit TLS</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <ellipse cx="12" cy="5" rx="9" ry="3" />
+                          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                        </svg>
+                        <span>MoRTH VAHAN Database Sync</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        <span>IRDAI Compliance</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* ================= OVERVIEW VIEW ================= */}
+              {view === "overview" && (
+                <div className="view on">
+                  <div
+                    className="glass mb-3 p-3 px-4 rounded-2xl flex items-center justify-between text-sm border border-[var(--t-ok-line)]"
+                    style={{ marginTop: 12, marginBottom: 8, background: "rgba(176, 137, 104, 0.14)" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#b08968]" style={{ boxShadow: "0 0 8px rgba(176, 137, 104, 0.5)" }} />
+                      <span style={{ color: "var(--ink)" }}>
+                        <b>MoRTH VAHAN &amp; Aadhaar Verified:</b> Vehicle records for <b>{car.plate}</b> ({car.make}) verified with full NCB protection.
+                      </span>
+                    </div>
+                    <span className="pill ok" style={{ fontSize: 11.5, padding: "2px 8px" }}>
+                      Active ✓
                     </span>
                   </div>
-                  <button type="button" className="btn sm ghost" style={{ padding: "4px 12px", fontSize: 13 }}>
-                    Verify OTP →
-                  </button>
-                </div>
-              )}
 
               <section className="glass hero">
                 <div>
@@ -507,11 +1138,11 @@ export default function App() {
                   <svg viewBox="0 0 140 140">
                     <defs>
                       <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0" stopColor="#ffb23e" />
-                        <stop offset="1" stopColor="#ff6b4a" />
+                        <stop offset="0" stopColor="#d99a4e" />
+                        <stop offset="1" stopColor="#b9770e" />
                       </linearGradient>
                     </defs>
-                    <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="10" />
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,235,210,.14)" strokeWidth="10" />
                     <circle
                       className="ring"
                       style={{ "--off": urgencyRingOffset }}
@@ -631,10 +1262,26 @@ export default function App() {
             <div className="view on">
               <div className="head">
                 <div>
-                  <h2>Plans for your {car.make.split(" ").slice(-2).join(" ")}</h2>
-                  <p className="mut">Sorted by what fits you best. Tap Add to compare on any two.</p>
+                  <h2>Plans for your {car.make}</h2>
+                  <p className="mut">
+                    Sorted by Best match. Zero depreciation is pre-selected because your car is 3 years old.
+                  </p>
                 </div>
-                <span className="pill">Demo quotes</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn ghost sm"
+                    onClick={() => setSpotOpen(true)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Search className="size-3.5" style={{ width: 14, height: 14 }} />
+                    <span>Search plans</span>
+                    <kbd style={{ fontSize: "10.5px", padding: "1px 5px", background: "var(--line)", borderRadius: 4, fontFamily: "var(--mono)" }}>
+                      Ctrl K
+                    </kbd>
+                  </button>
+                  <span className="pill">3 comprehensive + 1 third party</span>
+                </div>
               </div>
 
               <div className="chips" role="group" aria-label="Add-ons">
@@ -657,18 +1304,19 @@ export default function App() {
               <div className="plans">
                 {PLANS.map((p) => {
                   const sel = cmp.includes(p.id);
-                  const calculatedPrice = getPrice(p);
                   return (
-                    <article key={p.id} className={`glass plan ${p.id === "A" ? "best" : ""}`}>
-                      <span className={`pill ${p.cls}`} style={{ alignSelf: "flex-start" }}>
-                        {p.badge}
-                      </span>
+                    <article
+                      key={p.id}
+                      id={`plan-${p.id}`}
+                      className={`glass plan ${p.id === "A" ? "best" : ""} ${highlightId === p.id ? "plan-flash" : ""}`}
+                    >
+                      <span className={`pill ${p.cls}`}>{p.badge}</span>
                       <div>
                         <div className="who">{p.insurer}</div>
                         <h3>{p.name}</h3>
                       </div>
                       <div className="price">
-                        {inr(calculatedPrice)}
+                        {inr(getPrice(p))}
                         <small> / year, taxes included</small>
                       </div>
                       <ul className="hl">
@@ -807,205 +1455,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ================= OTP VERIFICATION VIEW ================= */}
-          {view === "otp" && (
-            <div className="view on">
-              <div className="head">
-                <div>
-                  <h2>Identity Verification &amp; OTP Gate</h2>
-                  <p className="mut">
-                    Statutory identity verification and DPDP Act 2023 consent gate for vehicle renewal.
-                  </p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <span className="pill ok">256-Bit TLS</span>
-                  <span className="pill">MoRTH VAHAN Sync</span>
-                </div>
-              </div>
 
-              <div style={{ maxWidth: 640, margin: "0 auto" }}>
-                <div className="glass" style={{ padding: "32px 28px", display: "grid", gap: 22 }}>
-                  {/* Vehicle Context Banner */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderRadius: 18, background: "rgba(255,255,255,0.7)", border: "1px solid var(--line)" }}>
-                    <div>
-                      <span className="plate">
-                        <small>IND</small>
-                        {car.plate}
-                      </span>
-                      <div style={{ fontWeight: 600, marginTop: 6, fontSize: 15 }}>
-                        {car.make} ({car.year})
-                      </div>
-                      <div className="mut" style={{ fontSize: 13.5 }}>
-                        Current: {car.insurer} · Expires in {car.days} days
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span className="pill warn">Renewal Due</span>
-                      <div className="mut" style={{ fontSize: 12, marginTop: 4 }}>Kolkata Regional RTO</div>
-                    </div>
-                  </div>
-
-                  {/* Mobile & OTP Input */}
-                  <div style={{ display: "grid", gap: 14 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <label style={{ fontWeight: 600, fontSize: 14 }}>
-                        Registered Mobile Number
-                      </label>
-                      <button
-                        type="button"
-                        className="mut"
-                        style={{ fontSize: 12.5, fontWeight: 600, textDecoration: "underline", background: "none", border: "none" }}
-                        onClick={() => {
-                          const num = prompt("Enter 10-digit mobile number:", mobileNumber);
-                          if (num) setMobileNumber(num.replace(/\D/g, "").slice(0, 10));
-                        }}
-                      >
-                        Change Number
-                      </button>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 14, background: "var(--glass-strong)", border: "1.5px solid var(--line)" }}>
-                      <span style={{ fontWeight: 700, paddingRight: 10, borderRight: "1px solid var(--line)", color: "var(--ink)" }}>
-                        +91
-                      </span>
-                      <input
-                        type="tel"
-                        value={mobileNumber}
-                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                        style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontWeight: 600, fontSize: 18, letterSpacing: ".06em" }}
-                        placeholder="98XXXXXXXX"
-                      />
-                      <span className="pill" style={{ fontSize: 11.5 }}>Aadhaar Linked</span>
-                    </div>
-
-                    {/* 6 Digit Inputs */}
-                    <div style={{ marginTop: 6 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                        <span style={{ fontWeight: 600, fontSize: 14 }}>Enter 6-digit Verification OTP</span>
-                        <button
-                          type="button"
-                          style={{ fontSize: 12.5, color: "var(--ink)", fontWeight: 600, background: "none", border: "none", textDecoration: "underline" }}
-                          onClick={fillDemoOtp}
-                        >
-                          Demo Code: 123456
-                        </button>
-                      </div>
-
-                      <div style={{ display: "flex", gap: 10, justifyContent: "space-between" }} onPaste={handleOtpPaste}>
-                        {otpDigits.map((digit, i) => (
-                          <input
-                            key={i}
-                            ref={(el) => (otpInputRefs.current[i] = el)}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handleDigitChange(i, e.target.value)}
-                            onKeyDown={(e) => handleDigitKeyDown(i, e)}
-                            style={{
-                              flex: 1,
-                              height: 58,
-                              textAlign: "center",
-                              fontSize: 24,
-                              fontWeight: 700,
-                              borderRadius: 14,
-                              border: "2px solid var(--line)",
-                              background: "#fff",
-                              color: "var(--ink)",
-                              outline: "none",
-                              boxShadow: "0 2px 8px rgba(0,0,0,.04)",
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, color: "var(--mut)", marginTop: 10 }}>
-                        <span>
-                          {otpCountdown > 0 ? (
-                            `Resend OTP in ${otpCountdown}s`
-                          ) : (
-                            <button
-                              type="button"
-                              style={{ color: "var(--ink)", fontWeight: 600, background: "none", border: "none", textDecoration: "underline" }}
-                              onClick={() => {
-                                setOtpCountdown(30);
-                                showToast("New OTP dispatched to registered mobile");
-                              }}
-                            >
-                              Resend OTP
-                            </button>
-                          )}
-                        </span>
-                        <span>TRAI DLT Whitelisted Route</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* DPDP Consent */}
-                  <div style={{ padding: 16, borderRadius: 18, background: "rgba(255,255,255,0.6)", border: "1px solid var(--line)", display: "grid", gap: 10 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--ink)" }}>
-                      DPDP Act 2023 Statutory Consent Architecture
-                    </div>
-
-                    <label className="chk" style={{ margin: 0 }}>
-                      <input
-                        type="checkbox"
-                        checked={consentMandatory}
-                        onChange={(e) => setConsentMandatory(e.target.checked)}
-                      />
-                      <span style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-                        <b>Mandatory Underwriting Processing:</b> I authorize InsureDrive to query VAHAN/IIB records to retrieve policy expiry details and calculate quotes.
-                      </span>
-                    </label>
-
-                    <label className="chk" style={{ margin: 0 }}>
-                      <input
-                        type="checkbox"
-                        checked={consentReminders}
-                        onChange={(e) => setConsentReminders(e.target.checked)}
-                      />
-                      <span style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-                        <b>Expiry Reminders:</b> Send scheduled reminders 45, 30, 15, and 7 days prior to expiry via SMS and email.
-                      </span>
-                    </label>
-
-                    <label className="chk" style={{ margin: 0 }}>
-                      <input
-                        type="checkbox"
-                        checked={consentWhatsapp}
-                        onChange={(e) => setConsentWhatsapp(e.target.checked)}
-                      />
-                      <span style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-                        <b>WhatsApp Renewal Assistant:</b> Enable instant policy PDF dispatch and 24x7 roadside claim support on WhatsApp.
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <button
-                      type="button"
-                      disabled={isSubmittingOtp || !consentMandatory}
-                      onClick={handleVerifyOtp}
-                      className="btn block"
-                    >
-                      {isSubmittingOtp ? "Verifying..." : "Verify OTP & Continue to Overview →"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsVerified(true);
-                        navigateTo("overview");
-                      }}
-                      className="btn ghost block sm"
-                    >
-                      Skip for now (Explore Overview &amp; Plans)
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ================= MY GARAGE VIEW ================= */}
           {view === "garage" && (
@@ -1220,7 +1670,9 @@ export default function App() {
               </div>
             </div>
           )}
-        </main>
+        </>
+      )}
+    </main>
 
         <footer className="foot">
           <span>Demo data — quotes and vehicle details are samples for design review, not real offers.</span>
@@ -1246,6 +1698,17 @@ export default function App() {
       <div className={`toast ${toastMsg ? "on" : ""}`} role="status">
         {toastMsg}
       </div>
+
+      {/* Spotlight Search Modal (active for Plans view) */}
+      <AppleSpotlight
+        isOpen={spotOpen && view === "plans" && isVerified}
+        onClose={() => setSpotOpen(false)}
+        results={searchPlans(PLANS, spotQuery, getPrice)}
+        onSelect={handleSpotSelect}
+        shortcuts={spotShortcuts}
+        query={spotQuery}
+        onQueryChange={setSpotQuery}
+      />
 
       {/* ================= MODAL / SHEET ================= */}
       <div

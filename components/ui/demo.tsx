@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { Navbar1 } from "@/components/ui/navbar-1"
+import { AppleSpotlight } from "@/components/ui/apple-spotlight"
 import {
   Bell,
   FileText,
@@ -16,6 +18,20 @@ import {
 import ExpandedTabs from "@/components/ui/expanded-tabs"
 import { Feature } from "@/components/ui/feature-section-with-bento-grid"
 
+export default function DemoOne() {
+  return <AppleSpotlight />
+}
+
+const Demo = () => {
+  return (
+    <>
+      <Navbar1 />
+    </>
+  )
+}
+
+export { Demo }
+
 export function FeatureDemo() {
   return (
     <div className="w-full">
@@ -24,7 +40,7 @@ export function FeatureDemo() {
   )
 }
 
-export default function DefaultDemo() {
+export function DefaultDemo() {
   const tabs = [
     { title: "Dashboard", icon: Home },
     { title: "Notifications", icon: Bell },

@@ -188,7 +188,7 @@ a{color:inherit}
 
 <!-- Dense per-frame calibration produced by write_tracks.py (optional: the page
      falls back to the embedded tables below if this file is not present). -->
-<script src="tracks.js"></script>
+<script src="/tracks.js"></script>
 
 <script>
 (()=>{
@@ -364,9 +364,10 @@ const QUAD_BY_TIER={
  * point order is rotated/reflected can never reintroduce the flicker.
  */
 const TRACKS_BY_TIER={};
-if(typeof TRACKS!=='undefined'&&TRACKS){
-  for(const key in TRACKS){
-    const entry=TRACKS[key];
+const activeTracks = (typeof window !== 'undefined' && window.TRACKS) || (typeof TRACKS !== 'undefined' ? TRACKS : null);
+if(activeTracks){
+  for(const key in activeTracks){
+    const entry=activeTracks[key];
     if(!entry||!entry.QUAD||!entry.QUAD.length) continue;
     const canon=expandQuad(smoothTable(canonicalizeTable(entry.QUAD)));
     const name=key==='_4k'?'4k':key==='_1080'?'1080':'360';
