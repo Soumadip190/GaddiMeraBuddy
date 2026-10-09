@@ -436,6 +436,162 @@ export const INSURANCE_TOPICS = [
 ];
 
 // =========================================================================
+// REUSABLE COMPONENT: BlueGeometricDoodleBg
+// Recreates the abstract geometric doodle lines & shapes from the reference
+// as a strictly transparent background layer for solid blue sections.
+// =========================================================================
+export function BlueGeometricDoodleBg({ variant = "section" }) {
+  const isCompact = variant === "compact";
+  return (
+    <div className="blue-doodle-bg" aria-hidden="true">
+      <svg
+        viewBox={isCompact ? "0 0 800 220" : "0 0 1200 520"}
+         preserveAspectRatio="xMidYMid slice"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* 1. Top-left wavy sinusoidal ribbon */}
+        <path
+          d="M 28 46 Q 60 16, 92 46 T 156 46 T 220 46 T 284 46"
+          stroke="rgba(255,255,255,0.14)"
+          strokeWidth="16"
+          strokeLinecap="round"
+        />
+
+        {/* 2. Top-center upward rainbow arch & inverted U-arch */}
+        <path
+          d="M 380 76 A 46 46 0 0 1 472 76"
+          stroke="rgba(255,255,255,0.12)"
+          strokeWidth="22"
+          strokeLinecap="butt"
+        />
+        <path
+          d="M 520 26 A 42 42 0 0 0 604 26"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth="22"
+          strokeLinecap="butt"
+        />
+
+        {/* 3. 12-Ray Sunburst (Left side, matching reference) */}
+        <g transform="translate(135, 195)" opacity="0.13">
+          <circle cx="0" cy="0" r="46" fill="#FFFFFF" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+            <rect
+              key={deg}
+              x="-6"
+              y="-76"
+              width="12"
+              height="26"
+              rx="2"
+              fill="#FFFFFF"
+              transform={`rotate(${deg})`}
+            />
+          ))}
+        </g>
+
+        {/* 4. Concave 4-point diamond stars */}
+        <path
+          d="M 310 92 Q 310 120, 338 120 Q 310 120, 310 148 Q 310 120, 282 120 Q 310 120, 310 92 Z"
+          fill="rgba(255,255,255,0.15)"
+        />
+        <path
+          d="M 336 146 Q 336 168, 358 168 Q 336 168, 336 190 Q 336 168, 314 168 Q 336 168, 336 146 Z"
+          fill="rgba(255,255,255,0.11)"
+        />
+
+        {/* 5. Three bunting / pennant triangles (Top-right) */}
+        <g transform="translate(650, 24)" opacity="0.12">
+          <polygon points="0,0 74,0 37,68" fill="#FFFFFF" />
+          <polygon points="58,0 162,0 110,104" fill="#FFFFFF" />
+          <polygon points="146,0 220,0 183,68" fill="#FFFFFF" />
+        </g>
+
+        {/* 6. Scalloped 3-lobe cloud half-circle */}
+        <g transform="translate(620, 148)" opacity="0.11">
+          <path
+            d="M 0 0 H 240 A 44 44 0 0 1 168 38 A 52 52 0 0 1 72 38 A 44 44 0 0 1 0 0 Z"
+            fill="#FFFFFF"
+          />
+        </g>
+
+        {/* 7. Offset interlocking semicircle arches */}
+        <g transform="translate(46, 310)" opacity="0.12">
+          <path d="M 0 64 A 52 52 0 0 1 104 64" stroke="#FFFFFF" strokeWidth="24" />
+          <path d="M 52 64 A 52 52 0 0 0 156 64" stroke="#FFFFFF" strokeWidth="24" />
+        </g>
+
+        {/* 8. 10-point spiky polygon star */}
+        <polygon
+          points="430,220 444,250 476,240 462,270 492,286 460,300 472,332 440,318 426,348 412,318 380,332 392,300 360,286 390,270 376,240 408,250"
+          fill="rgba(255,255,255,0.11)"
+        />
+
+        {/* 9. Looped ribbon squiggle (Right side) */}
+        <path
+          d="M 910 218 C 965 205, 1025 235, 1015 282 C 1008 318, 965 320, 962 284 C 960 248, 1020 216, 1075 212"
+          stroke="rgba(255,255,255,0.14)"
+          strokeWidth="20"
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* 10. 3x3 Grid of Circles (Bottom-left) */}
+        <g transform="translate(260, 355)" opacity="0.11">
+          {[0, 1, 2].map((r) =>
+            [0, 1, 2].map((c) => (
+              <circle key={`${r}-${c}`} cx={c * 38} cy={r * 38} r="18" fill="#FFFFFF" />
+            ))
+          )}
+        </g>
+
+        {/* 11. Opposing semicircle hourglass domes (Bottom-center) */}
+        <g transform="translate(540, 295)" opacity="0.11">
+          <path d="M 0 0 H 180 A 90 90 0 0 1 0 0 Z" fill="#FFFFFF" />
+          <path d="M 0 180 H 180 A 90 90 0 0 0 0 180 Z" fill="#FFFFFF" />
+        </g>
+
+        {/* 12. 2x2 Bauhaus quarter-circles + circles block (Top-right corner) */}
+        <g transform="translate(960, 28)" opacity="0.12">
+          <path d="M 0 0 A 56 56 0 0 1 56 56 H 0 Z" fill="#FFFFFF" />
+          <circle cx="88" cy="28" r="28" fill="#FFFFFF" />
+          <circle cx="28" cy="88" r="28" fill="#FFFFFF" />
+          <path d="M 60 60 H 116 V 116 A 56 56 0 0 1 60 60 Z" fill="#FFFFFF" />
+        </g>
+
+        {/* 13. Bottom wavy sinusoidal ribbon */}
+        <path
+          d="M 760 445 Q 790 418, 820 445 T 880 445 T 940 445 T 1000 445"
+          stroke="rgba(255,255,255,0.14)"
+          strokeWidth="15"
+          strokeLinecap="round"
+        />
+
+        {/* 14. Large 4-point concave star + 24-ray fine starburst (Bottom-right) */}
+        <path
+          d="M 850 320 Q 850 365, 895 365 Q 850 365, 850 410 Q 850 365, 805 365 Q 850 365, 850 320 Z"
+          fill="rgba(255,255,255,0.13)"
+        />
+        <g transform="translate(1105, 395)" opacity="0.14">
+          <circle cx="0" cy="0" r="24" fill="#FFFFFF" />
+          {Array.from({ length: 24 }, (_, i) => i * 15).map((deg) => (
+            <rect
+              key={deg}
+              x="-2"
+              y="-62"
+              width="4"
+              height="40"
+              rx="1.5"
+              fill="#FFFFFF"
+              transform={`rotate(${deg})`}
+            />
+          ))}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// =========================================================================
 // ICON HELPER
 // =========================================================================
 function TopicIcon({ name, size = 18 }) {
@@ -633,14 +789,15 @@ export function InsuranceTermModal({ topic, onClose, onNavigateToPlans }) {
 
         {/* Modal Header */}
         <div className="lm-modal-head">
-          <div className="lm-modal-kicker">
+          <BlueGeometricDoodleBg variant="compact" />
+          <div className="lm-modal-kicker" style={{ position: "relative", zIndex: 1 }}>
             <span className="lm-modal-ic">
               <TopicIcon name={topic.icon} size={20} />
             </span>
             <span className="lm-modal-cat">{topic.category}</span>
           </div>
-          <h2 id="lm-modal-title">{topic.title}</h2>
-          <p className="lm-modal-sub">{topic.shortDescription}</p>
+          <h2 id="lm-modal-title" style={{ position: "relative", zIndex: 1 }}>{topic.title}</h2>
+          <p className="lm-modal-sub" style={{ position: "relative", zIndex: 1 }}>{topic.shortDescription}</p>
         </div>
 
         {/* Scrollable Content Body */}
@@ -745,17 +902,23 @@ export function LearnMorePage({ car, onNavigate }) {
     <div className="view on lm-page">
       {/* Page Hero Header */}
       <section className="glass hero lm-hero">
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <BlueGeometricDoodleBg />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+            <span className="ed-pixel-tag on-blue">01 // HANDBOOK</span>
             <span className="lm-kicker-tag">Insurance Guide · Plain-English Handbook</span>
+            <span className="ed-rot-note">ZERO JARGON</span>
           </div>
-          <h1>Understand your car insurance.</h1>
+          <h1>
+            Understand Your{" "}
+            <span className="ed-lime-block on-blue">CAR INSURANCE.</span>
+          </h1>
           <p style={{ maxWidth: "62ch" }}>
             Insurance can be confusing. Learn what your policy actually means, what you're paying for, and which benefits matter for your car.
           </p>
         </div>
 
-        <div className="lm-hero-aside">
+        <div className="lm-hero-aside" style={{ position: "relative", zIndex: 1 }}>
           <div className="lm-hero-stat">
             <b>20</b>
             <span>Key concepts explained clearly</span>
@@ -773,12 +936,15 @@ export function LearnMorePage({ car, onNavigate }) {
         <section className="lm-featured-section" aria-labelledby="lm-featured-heading">
           <div className="lm-section-bar">
             <div>
-              <span className="lm-eyebrow">Essential starting points</span>
-              <h2 id="lm-featured-heading" style={{ fontSize: "clamp(19px, 2.2vw, 23px)", marginTop: 2 }}>
-                Most people check these first
+              <div className="ed-eyebrow-row" style={{ marginBottom: 6 }}>
+                <span className="ed-pixel-tag">02 // CORE TERMS</span>
+                <span className="lm-eyebrow">Essential starting points</span>
+              </div>
+              <h2 id="lm-featured-heading" style={{ fontSize: "clamp(22px, 2.5vw, 30px)", marginTop: 2 }}>
+                Most People <span className="ed-lime-block">CHECK THESE FIRST</span>
               </h2>
             </div>
-            <span className="mut" style={{ fontSize: 13.5 }}>
+            <span className="mut" style={{ fontSize: 12.5, fontFamily: "var(--font-tech-mono)" }}>
               Click any card to open a clear breakdown
             </span>
           </div>
@@ -800,7 +966,12 @@ export function LearnMorePage({ car, onNavigate }) {
       <section className="lm-controls-section" aria-label="Search and filter insurance topics">
         <div className="lm-controls-header">
           <div>
-            <h2>All insurance topics</h2>
+            <div className="ed-eyebrow-row" style={{ marginBottom: 6 }}>
+              <span className="ed-pixel-tag">03 // GLOSSARY INDEX</span>
+            </div>
+            <h2>
+              All <span className="ed-lime-block">INSURANCE TOPICS</span>
+            </h2>
             <p className="mut" style={{ fontSize: 14.5 }}>
               Browse by category or search for a specific policy term, add-on, or claim rule.
             </p>

@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import "./src/index.css";
 import { AppleSpotlight } from "./src/components/ui/apple-spotlight.jsx";
 import { searchPlans } from "./src/lib/searchPlans.js";
-import { LearnMorePage, INSURANCE_TOPICS, InsuranceTermModal } from "./src/LearnMorePage.jsx";
+import { LearnMorePage, INSURANCE_TOPICS, InsuranceTermModal, BlueGeometricDoodleBg } from "./src/LearnMorePage.jsx";
+import { SiteFooter } from "./src/SiteFooter.jsx";
 import { Search, ShieldCheck, Wrench, Shield, TrendingDown, Menu, X, ArrowUpRight, UserCheck, Car } from "lucide-react";
 import HERO_IMAGE from "./src/assets/images/hero_car_renewal_couple_1791530230297.jpg";
 import CARD_IMG_COMPARE from "./src/assets/images/card_compare_policies_1791530244196.jpg";
@@ -1150,6 +1151,11 @@ export default function App() {
               {/* 1. HERO SECTION (Recreates Reference Left Headline + Right Tilted Visual & Lime Ribbons) */}
               <section className="ref-hero" aria-label="Hero">
                 <div className="ref-hero-left">
+                  <div className="ed-eyebrow-row">
+                    <span className="ed-pixel-tag">01 // YOUR NEXT MOVE</span>
+                    <span className="ed-rot-note">BUILT FOR INDIAN DRIVERS</span>
+                  </div>
+
                   <div className="ref-hero-kicker">
                     <span>Illustrative Motor Insurance Platform</span>
                     <span>·</span>
@@ -1157,7 +1163,20 @@ export default function App() {
                   </div>
 
                   <h1 className="ref-hero-title">
-                    Your next car insurance renewal, made simpler.
+                    Car Insurance,{" "}
+                    <span className="ed-oversize">WITHOUT</span> the{" "}
+                    <span className="ed-underline-wrap">
+                      GUESSWORK.
+                      <svg className="ed-underline-svg" viewBox="0 0 240 20" fill="none" aria-hidden="true">
+                        <path
+                          d="M4 14C62 5 154 4 236 13"
+                          stroke="#378FF5"
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </span>{" "}
+                    <span className="ed-lime-block">RENEW SMARTER.</span>
                   </h1>
 
                   <p className="ref-hero-sub">
@@ -1297,16 +1316,17 @@ export default function App() {
               >
                 <div className="ref-snapshot-head">
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span className="ed-pixel-tag">02 // LIVE TELEMETRY</span>
                       <span className="plate" style={{ fontSize: 15 }}>
                         <small>IND</small>
                         {car.plate}
                       </span>
                       <span className="pill warn">Renewal due in {car.days} days</span>
-                      <span className="pill">Illustrative / Mock Data</span>
                     </div>
                     <h2 style={{ margin: 0 }}>
-                      Your {car.make} ({car.year}) Renewal Snapshot
+                      Your {car.make} ({car.year}){" "}
+                      <span className="ed-lime-block">Renewal Snapshot</span>
                     </h2>
                   </div>
 
@@ -1442,9 +1462,15 @@ export default function App() {
                 className="ref-blue-section"
                 aria-labelledby="explore-coverage-heading"
               >
+                <BlueGeometricDoodleBg />
                 <div className="ref-blue-header">
+                  <div className="ed-eyebrow-row">
+                    <span className="ed-pixel-tag on-blue">03 // PROTECTION TIERS</span>
+                    <span className="ed-rot-note">LESS GUESSWORK. MORE CLARITY.</span>
+                  </div>
                   <h2 id="explore-coverage-heading" className="ref-blue-title">
-                    Explore Insurance Coverage
+                    Explore Insurance{" "}
+                    <span className="ed-lime-block on-blue">KNOW YOUR COVER</span>
                   </h2>
                 </div>
 
@@ -1526,17 +1552,15 @@ export default function App() {
               {/* 4. LOWER THREE-CARD GRID ("Explore Your Insurance Options") */}
               <section className="ref-options-section" aria-labelledby="explore-options-heading">
                 <div className="ref-options-head">
-                  <h2 id="explore-options-heading" className="ref-options-title">
-                    Explore Your Insurance Options
-                  </h2>
-                  <button
-                    type="button"
-                    className="ref-all-link"
-                    onClick={() => navigateTo("plans")}
-                  >
-                    <span className="ref-all-link-plus" aria-hidden="true">+</span>
-                    <span>All Policy Options</span>
-                  </button>
+                  <div>
+                    <div className="ed-eyebrow-row">
+                      <span className="ed-pixel-tag">04 // DECISION MATRIX</span>
+                    </div>
+                    <h2 id="explore-options-heading" className="ref-options-title">
+                      Explore Your{" "}
+                      <span className="ed-lime-block">INSURANCE OPTIONS</span>
+                    </h2>
+                  </div>
                 </div>
 
                 <div className="ref-options-grid">
@@ -1749,14 +1773,17 @@ export default function App() {
             <div className="view on">
               <div className="head">
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                    <span className="ed-pixel-tag">05 // QUOTE COMPARISON</span>
                     <span className="plate" style={{ fontSize: 14 }}>
                       <small>IND</small>
                       {car.plate}
                     </span>
                     <span className="pill">Illustrative Quotes</span>
                   </div>
-                  <h2>Plans for your {car.make}</h2>
+                  <h2>
+                    Compare With <span className="ed-lime-block">CLARITY</span> · {car.make}
+                  </h2>
                   <p className="mut">
                     Sorted by Best match. Toggle optional add-ons below to see how illustrative prices change.
                   </p>
@@ -1954,7 +1981,12 @@ export default function App() {
             <div className="view on">
               <div className="head">
                 <div>
-                  <h2>My Garage</h2>
+                  <div className="ed-eyebrow-row">
+                    <span className="ed-pixel-tag">06 // FLEET TRACKER</span>
+                  </div>
+                  <h2>
+                    My Garage &amp; <span className="ed-lime-block">RENEWAL TIMELINE</span>
+                  </h2>
                   <p className="mut">Track your vehicles, illustrative renewal timelines, and reminder preferences.</p>
                 </div>
               </div>
@@ -2079,27 +2111,15 @@ export default function App() {
           )}
         </main>
 
-        {/* Footer inside White Canvas */}
-        <footer className="foot">
-          <span>Illustrative Demo — quotes, insurer names, and vehicle records are mock samples for educational and design demonstration.</span>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => navigateTo("learn-more")}
-              style={{ background: "none", border: 0, padding: 0, color: "inherit", cursor: "pointer", textDecoration: "underline" }}
-            >
-              Insurance Terms Guide
-            </button>
-            <span>·</span>
-            <button
-              type="button"
-              onClick={openCallback}
-              style={{ background: "none", border: 0, padding: 0, color: "inherit", cursor: "pointer", textDecoration: "underline" }}
-            >
-              Request Callback
-            </button>
-          </div>
-        </footer>
+        {/* Premium Editorial Footer inside Main Canvas */}
+        <SiteFooter
+          car={car}
+          garageCount={garage.length}
+          onNavigate={navigateTo}
+          onOpenTopic={openCoverageTopic}
+          onOpenCallback={openCallback}
+          onOpenBuyReview={openBuyReview}
+        />
       </div>
 
       {/* Homepage Coverage Modal (when clicking any of the 4 cards in the Blue Category Section) */}
