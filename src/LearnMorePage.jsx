@@ -666,7 +666,7 @@ export function InsuranceTermModal({ topic, onClose, onNavigateToPlans }) {
           {/* 4. What to Check in Your Policy */}
           <div className="lm-section">
             <div className="lm-sec-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <CheckCircle2 width={15} height={15} style={{ color: "var(--t-brown-900)" }} />
+              <CheckCircle2 width={15} height={15} style={{ color: "var(--color-primary)" }} />
               <span>What to check in your policy</span>
             </div>
             <p className="lm-sec-text">{topic.whatToCheck}</p>
@@ -675,8 +675,8 @@ export function InsuranceTermModal({ topic, onClose, onNavigateToPlans }) {
           {/* 5. Optional Good to Know Tip */}
           {topic.tip && (
             <div className="lm-section lm-section-tip">
-              <div className="lm-sec-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Lightbulb width={15} height={15} style={{ color: "var(--t-warn)" }} />
+              <div className="lm-sec-label" style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--color-text)" }}>
+                <Lightbulb width={15} height={15} style={{ color: "var(--color-text)" }} />
                 <span>Good to know</span>
               </div>
               <p className="lm-sec-text">{topic.tip}</p>
