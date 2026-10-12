@@ -642,15 +642,25 @@ export default function App() {
 
             {/* Right: Active Plate / OTP Controls + Rounded Blue Primary Button */}
             <div className="ref-nav-right">
-              <button
-                type="button"
-                onClick={() => navigateTo("otp")}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#E8E8E8] bg-white text-[#202124] hover:border-[#378FF5] transition-colors cursor-pointer"
-                title="Open vehicle & mobile OTP verification"
-              >
-                <span className="w-2 h-2 rounded-full" style={{ background: isVerified ? "#1f7a3f" : "#378FF5" }} />
-                <span>{car.plate}</span>
-              </button>
+              {isVerified ? (
+                <div
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#E8E8E8] bg-white text-[#202124]"
+                  title="Verified vehicle"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#1f7a3f" }} />
+                  <span>{car.plate}</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigateTo("otp")}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#E8E8E8] bg-white text-[#202124] hover:border-[#378FF5] transition-colors cursor-pointer"
+                  title="Open vehicle & mobile OTP verification"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#378FF5" }} />
+                  <span>{car.plate}</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -695,13 +705,15 @@ export default function App() {
               >
                 My Garage ({garage.length})
               </button>
-              <button
-                type="button"
-                className={`ref-nav-link ${view === "otp" ? "active" : ""}`}
-                onClick={() => navigateTo("otp")}
-              >
-                OTP Verification ({car.plate})
-              </button>
+              {!isVerified && (
+                <button
+                  type="button"
+                  className={`ref-nav-link ${view === "otp" ? "active" : ""}`}
+                  onClick={() => navigateTo("otp")}
+                >
+                  OTP Verification ({car.plate})
+                </button>
+              )}
             </div>
           )}
         </header>
