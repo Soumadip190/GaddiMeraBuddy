@@ -2111,15 +2111,17 @@ export default function App() {
           )}
         </main>
 
-        {/* Premium Editorial Footer inside Main Canvas */}
-        <SiteFooter
-          car={car}
-          garageCount={garage.length}
-          onNavigate={navigateTo}
-          onOpenTopic={openCoverageTopic}
-          onOpenCallback={openCallback}
-          onOpenBuyReview={openBuyReview}
-        />
+        {/* Premium Editorial Footer inside Main Canvas (excluded from OTP page) */}
+        {view !== "otp" && (
+          <SiteFooter
+            car={car}
+            garageCount={garage.length}
+            onNavigate={navigateTo}
+            onOpenTopic={openCoverageTopic}
+            onOpenCallback={openCallback}
+            onOpenBuyReview={openBuyReview}
+          />
+        )}
       </div>
 
       {/* Homepage Coverage Modal (when clicking any of the 4 cards in the Blue Category Section) */}
